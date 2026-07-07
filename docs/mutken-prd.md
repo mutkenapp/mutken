@@ -558,17 +558,31 @@ When the assistant teacher shares a question:
 
 ### Purpose
 
-The Library is the searchable learning content hub for videos, lessons, practice sets, and quizzes.
+The Library is the curriculum-aligned learning content hub. It lets the student browse the selected subject exactly as it appears in the Egyptian public education textbook structure: semester, unit, lesson, then learning resources.
 
 ### User Value
 
-Students can explore content beyond today's plan and continue learning by topic, subject, skill, or recommendation.
+Students can find lessons using the same structure they already know from school textbooks. This reduces confusion and helps students connect Mutken resources with classroom learning.
 
 ### Core Features
 
-- Search by lesson, subject, or skill.
-- Grade filter.
-- Subject filter.
+- Subject header.
+- Back navigation to previous screen.
+- Semester filter.
+- Unit filter.
+- Curriculum structure:
+  - Semester
+  - Unit
+  - Lesson
+  - Learning resources inside lesson
+- Lesson list grouped under each unit.
+- Lesson cards showing:
+  - Lesson title
+  - Estimated duration
+  - Resource points available
+  - Lesson status
+  - Navigation to lesson resources
+- Search by lesson, unit, subject, or skill.
 - Content type filters:
   - Videos
   - Practice
@@ -578,13 +592,84 @@ Students can explore content beyond today's plan and continue learning by topic,
 - Recommended resources.
 - Resource cards with thumbnails, titles, duration, questions, status, and points.
 
+### Curriculum Structure
+
+The Library should mirror the official public education curriculum in Egypt for the selected grade and subject.
+
+Required hierarchy:
+
+```text
+Subject
+  Semester
+    Unit
+      Lesson
+        Learning resources
+```
+
+Example for Math:
+
+```text
+Math
+  Semester 1
+    Unit 1: Numbers
+      Place Value
+      Rounding
+      Estimation
+    Unit 2: Fractions
+      Intro to Fractions
+      Multiplying Fractions
+      Dividing Fractions
+  Semester 2
+    Unit 3: Geometry
+      Angles
+```
+
+The semester, unit, and lesson names must match the textbook/curriculum naming for the selected subject.
+
+### Lesson Resource Flow
+
+When a student selects a lesson:
+
+- The app opens the lesson's learning resources.
+- Resources may include:
+  - Video lesson
+  - Marker-based video questions
+  - Practice questions
+  - Short quiz
+  - Worked example
+  - Review resource
+- Completing learning resources inside the lesson affects:
+  - Points System
+  - Progress module
+  - Study Plan recommendation logic
+  - Weak-area recommendations
+  - Challenge readiness when relevant
+
+### Recommendation Relationship
+
+The Library is not only a static content catalog. Student activity inside the Library should influence recommendations.
+
+Examples:
+
+- If the student watches "Intro to Fractions" but answers marker questions incorrectly, the Study Plan can recommend a simpler fractions review.
+- If the student completes "Multiplying Fractions" with high accuracy, the Study Plan can recommend "Dividing Fractions" or a challenge.
+- If the student repeatedly fails questions in one unit, Progress should mark that unit or skill as a weak area.
+- If the assistant teacher recommends a resource, the Library should open the correct lesson/resource directly.
+
 ### Business Rules
 
 - Free users can open limited daily resources.
+- Free users have a Library content watch limit.
+- Free users should still see the curriculum structure, but locked/capped lessons should show an upgrade prompt.
 - Paid users can open unlimited resources for subscribed subjects.
+- Paid users can browse and watch all resources inside subscribed subjects without daily Library caps.
+- Unsubscribed subjects should remain visible but locked or upgrade-gated.
 - Locked resources should communicate why they are locked.
 - Resource completion should feed the Points System and Progress module.
 - Recommended resources should prioritize weak areas and active study plan goals.
+- Lesson completion should be calculated from completion of its required learning resources.
+- Unit progress should be calculated from completed lessons inside the unit.
+- Semester progress should be calculated from completed units/lessons inside the semester.
 
 ### Library Point Opportunities
 
@@ -597,10 +682,18 @@ Students can explore content beyond today's plan and continue learning by topic,
 
 ### Acceptance Criteria
 
-- Student can browse resources.
-- Student can filter by subject and content type.
+- Student can select a subject and see its curriculum structure.
+- Student can filter by semester.
+- Student can filter by unit.
+- Student can select a lesson.
+- Student can view all learning resources inside a lesson.
+- Semester, unit, and lesson structure matches the official Egyptian public education textbook structure for the selected subject.
+- Student can filter by content type when viewing resources.
 - Student can continue an in-progress lesson.
 - Resource cards show potential or earned points.
+- Resource achievements and question answers affect the Points System.
+- Resource achievements and question answers affect Study Plan recommendations.
+- Free users hit the Library watch/content limit.
 - Free plan caps are enforced.
 - Paid subject entitlements are enforced.
 
