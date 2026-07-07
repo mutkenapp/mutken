@@ -428,11 +428,93 @@ Students get guided support, motivation, and immediate feedback.
 - Teacher name and photo.
 - Join live button.
 - Live class screen.
-- Teacher video/presentation area.
+- Live teacher video area.
+- Live status and session timer.
+- Teacher-controlled shared area.
+- Shared study material state.
+- Shared quiz/question state.
+- Empty waiting state when nothing is shared.
 - Live question flow.
 - Multiple-choice answer submission.
 - Teacher note and explanation after answer.
 - Live points panel.
+
+### Live Screen Layout
+
+The live session screen has two main areas:
+
+1. Live teacher video area.
+2. Shared area controlled by the assistant teacher.
+
+The live teacher video area should show:
+
+- Teacher camera feed.
+- Live badge.
+- Session timer.
+- Teacher name.
+- Subject or session context.
+- Camera/micro interaction state when needed.
+
+The shared area is not controlled by the student. It is controlled by the assistant teacher during the session.
+
+### Teacher-Controlled Shared Area
+
+The assistant teacher decides what appears in the shared area at any moment.
+
+The shared area can be in one of these states:
+
+| State | Description | Student Action |
+| --- | --- | --- |
+| Empty / waiting | Nothing has been shared yet. The student waits for the assistant teacher to send material or a question. | No required action |
+| Study material | The assistant teacher shares an explanation, slide, image, resource excerpt, short clip, or worked example. | View, read, or follow the teacher |
+| Quiz / question | The assistant teacher shares a live question or poll. | Select answer and submit |
+| Feedback | The assistant teacher shares explanation after answers are submitted. | Review feedback |
+
+### Empty / Waiting State
+
+When the assistant teacher has not shared anything:
+
+- The shared area should clearly indicate that the student is waiting for teacher content.
+- The student should remain in the live session.
+- No points should be awarded only for waiting in this state.
+- The app may show lightweight text such as "Waiting for teacher to share material" or its Arabic equivalent.
+
+### Shared Study Material State
+
+When the assistant teacher shares study material:
+
+- The shared area should display the material without forcing a quiz response.
+- The material can be:
+  - Text explanation
+  - Slide
+  - Image
+  - PDF/page excerpt
+  - Short video clip
+  - Worked example
+  - Link to a related resource
+- The student can view the material while listening to the teacher.
+- If the material includes a related resource, it can link to the Resource Lesson Page after the live session.
+
+### Shared Quiz / Question State
+
+When the assistant teacher shares a question:
+
+- The shared area should show a "Shared by teacher" label.
+- The app should show question progress, for example Question 2 of 5.
+- The question text should be prominent.
+- Answer options should be easy to tap.
+- Submit Answer should remain disabled until the student selects an option.
+- Once submitted, the student's answer should be locked unless the teacher allows retry.
+- The assistant teacher can reveal the correct answer and explanation.
+
+### Teacher Control Rules
+
+- The assistant teacher can publish, replace, or clear shared content.
+- The assistant teacher can switch from study material to quiz at any point.
+- The assistant teacher can keep the shared area empty while speaking.
+- The assistant teacher can decide when a question is open and when it is closed.
+- Students should see updates in real time.
+- If the teacher clears the shared area, the student returns to the waiting state.
 
 ### Business Rules
 
@@ -441,6 +523,9 @@ Students get guided support, motivation, and immediate feedback.
 - Live points count toward weekly progress.
 - Attendance alone should not be enough to dominate rankings.
 - Correct participation should be rewarded more than passive attendance.
+- Viewing study material during live sessions can support learning progress but should not award the same points as answering correctly.
+- Quiz participation should be traceable to the specific live session and question.
+- If the shared area is empty, students can earn attendance/time points only through valid session attendance rules, not through shared-content actions.
 
 ### Live Session Rewards
 
@@ -456,7 +541,14 @@ Students get guided support, motivation, and immediate feedback.
 
 - Student can see the next live session date and time.
 - Student can join live session from the home card.
+- Student can see the teacher live video area.
+- Student can see the live badge and session timer.
+- Shared area can show an empty/waiting state.
+- Shared area can show teacher-shared study material.
+- Shared area can show a teacher-shared quiz question.
 - Student can answer a live question.
+- Submit Answer is disabled until an answer is selected.
+- Teacher can change what appears in the shared area.
 - Student receives feedback after answer submission.
 - Points earned from live session are visible.
 - Free users have limited live participation.
