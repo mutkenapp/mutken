@@ -25,12 +25,13 @@ Primary prototype domain: https://app.mutken.com
 15. [Module: Progress](#15-module-progress)
 16. [Module: Challenges](#16-module-challenges)
 17. [Module: Commercial Subscription](#17-module-commercial-subscription)
-18. [Data Model Requirements](#18-data-model-requirements)
-19. [Analytics Requirements](#19-analytics-requirements)
-20. [Non-Functional Requirements](#20-non-functional-requirements)
-21. [MVP Scope](#21-mvp-scope)
-22. [Release Readiness Checklist](#22-release-readiness-checklist)
-23. [Open Product Decisions](#23-open-product-decisions)
+18. [Module: Registration, Login, and Profile Identity](#18-module-registration-login-and-profile-identity)
+19. [Data Model Requirements](#19-data-model-requirements)
+20. [Analytics Requirements](#20-analytics-requirements)
+21. [Non-Functional Requirements](#21-non-functional-requirements)
+22. [MVP Scope](#22-mvp-scope)
+23. [Release Readiness Checklist](#23-release-readiness-checklist)
+24. [Open Product Decisions](#24-open-product-decisions)
 
 ## 1. Product Summary
 
@@ -221,6 +222,7 @@ The first commercial version should include these modules:
 7. Progress
 8. Challenges
 9. Commercial Subscription
+10. Registration, Login, and Profile Identity
 
 ## 9. Module: Study Plan
 
@@ -1108,15 +1110,211 @@ The Commercial Subscription module converts free users into paying users through
 - Cancelled users keep paid access until the end of the billing period.
 - Expired users downgrade to Free without losing progress.
 
-## 18. Data Model Requirements
+## 18. Module: Registration, Login, and Profile Identity
+
+### Purpose
+
+Registration and login create a verified student account that can safely connect learning progress, subscriptions, payments, support requests, and assistant teacher history to the correct student.
+
+### Business Purpose
+
+The account model must support:
+
+- Fast signup for free users.
+- Secure login for returning students.
+- Verified telephone number for identity, payment follow-up, and support.
+- A generated Mutken Student ID used later for payment reference, support, and account lookup.
+- Flexible signup methods through email, Google/Gmail, or Facebook.
+
+### Signup Methods
+
+Mutken should support these signup methods:
+
+| Method | Required? | Notes |
+| --- | --- | --- |
+| Email and password | Yes | Default signup option |
+| Google/Gmail account | Yes | Social signup and login |
+| Facebook account | Yes | Social signup and login |
+| Telephone number | Yes | Required for all accounts through OTP verification |
+
+Telephone verification is mandatory even when the student signs up with Google or Facebook.
+
+### Login Methods
+
+Mutken should support these login methods:
+
+- Email and password.
+- Google/Gmail login.
+- Facebook login.
+- Telephone number with OTP, if enabled for returning users.
+
+Recommended MVP rule:
+
+- Email, Google/Gmail, and Facebook are primary login methods.
+- Telephone OTP is required for verification and can also be used for account recovery.
+
+### Telephone OTP Verification
+
+Every student account must have a verified telephone number.
+
+OTP delivery channels:
+
+- SMS.
+- WhatsApp.
+
+Required behavior:
+
+- Student enters telephone number during signup.
+- Student selects or receives available OTP channel: SMS or WhatsApp.
+- System sends one-time password.
+- Student enters OTP.
+- Account is marked as phone verified only after successful OTP validation.
+- If OTP fails, student can request resend after a short cooldown.
+- OTP expires after a limited time.
+- Too many failed attempts should temporarily block verification attempts.
+
+### Required Registration Data
+
+Minimum required data for student signup:
+
+| Data Field | Required | Purpose |
+| --- | --- | --- |
+| Student first name | Yes | Personalization |
+| Student last name | Yes | Account identity |
+| Telephone number | Yes | OTP, payment, support |
+| OTP verification status | Yes | Security and trust |
+| Email address | Required for email signup, optional for social signup if provided by provider | Login and communication |
+| Password | Required for email signup only | Login |
+| Social provider ID | Required for Google/Facebook signup | Social login identity |
+| Grade/year | Yes | Curriculum and content selection |
+| Education system | Yes | Public education curriculum alignment |
+| Country | Yes | Curriculum, pricing, and phone format |
+| Preferred language | Yes | Arabic/English app experience |
+| Parent/guardian name | Recommended | Support and payment context |
+| Parent/guardian phone | Recommended | Payment and support follow-up |
+
+### Optional Profile Data
+
+Optional fields that can improve personalization:
+
+- School name.
+- Governorate/city.
+- Student photo/avatar.
+- Parent email.
+- Learning goals.
+- Preferred subjects.
+- Weak subjects selected by parent/student.
+
+### Generated Mutken Student ID
+
+After successful account creation, Mutken must generate a unique Student ID.
+
+Business use:
+
+- Payment reference.
+- Support ticket lookup.
+- Parent support calls.
+- Subscription activation.
+- Manual payment reconciliation.
+- Assistant teacher account identification.
+
+Student ID requirements:
+
+- Generated automatically.
+- Unique across all students.
+- Visible in the student's profile.
+- Easy to read and share with support.
+- Not based only on telephone number or personal data.
+- Never changes after creation.
+
+Recommended format:
+
+```text
+MTK-YYYY-000001
+```
+
+Example:
+
+```text
+MTK-2026-001245
+```
+
+### Registration Flow
+
+Recommended signup flow:
+
+1. Student chooses signup method: Email, Google/Gmail, or Facebook.
+2. Student provides required profile data.
+3. Student enters telephone number.
+4. System sends OTP through SMS or WhatsApp.
+5. Student verifies OTP.
+6. System creates profile and generates Mutken Student ID.
+7. Student selects grade, education system, and subjects of interest.
+8. Student lands in Free Plan and can start learning.
+9. Upgrade prompts later guide the student to paid subject packages.
+
+### Profile Requirements
+
+The student profile should show:
+
+- Student name.
+- Mutken Student ID.
+- Grade/year.
+- Country.
+- Education system.
+- Selected/subscribed subjects.
+- Telephone verification status.
+- Active subscription status.
+- Lifetime points.
+- Achievements.
+
+### Business Rules
+
+- A verified telephone number is required before payment activation.
+- A verified telephone number is required before support can process sensitive account requests.
+- One telephone number should not create unlimited student accounts without guardrails.
+- Social signup accounts must still complete phone OTP verification.
+- Student ID should be used in payment and support workflows instead of asking support teams to search by name only.
+- If a user signs up with social login and later adds email/password, both methods should link to the same account after verification.
+- If the same email or phone already exists, the app should guide the user to login or account recovery instead of creating a duplicate.
+
+### Acceptance Criteria
+
+- Student can sign up with email and password.
+- Student can sign up with Google/Gmail.
+- Student can sign up with Facebook.
+- Student must verify telephone number by OTP.
+- OTP can be delivered by SMS or WhatsApp.
+- Student can log in with email.
+- Student can log in with Google/Gmail.
+- Student can log in with Facebook.
+- Student can recover access using verified telephone OTP.
+- System generates a unique Mutken Student ID after signup.
+- Student ID appears in profile.
+- Student ID can be used later for payment and support.
+- Duplicate email/phone cases are handled.
+
+## 19. Data Model Requirements
 
 ### Student
 
 - Student ID
+- Mutken Student ID display code
 - Name
+- First name
+- Last name
 - Grade
 - Country
+- Education system
 - Preferred language
+- Telephone number
+- Telephone verification status
+- Email address
+- Authentication providers linked
+- Profile photo/avatar
+- Parent/guardian name
+- Parent/guardian phone
+- Parent/guardian email
 - Parent account link
 - Active subscription
 - Selected subjects
@@ -1124,10 +1322,37 @@ The Commercial Subscription module converts free users into paying users through
 - Weekly points
 - Achievements
 
+### Auth Account
+
+- Auth account ID
+- Student ID
+- Email
+- Password hash for email signup
+- Google/Gmail provider ID
+- Facebook provider ID
+- Linked provider list
+- Last login method
+- Last login timestamp
+- Account status
+- Created timestamp
+
+### OTP Verification
+
+- OTP verification ID
+- Student ID
+- Telephone number
+- Delivery channel: SMS or WhatsApp
+- OTP status
+- Attempt count
+- Resend count
+- Expiry timestamp
+- Verified timestamp
+
 ### Subscription
 
 - Subscription ID
 - Student ID
+- Mutken Student ID display code
 - Plan type
 - Subject package count
 - Selected subjects
@@ -1137,6 +1362,34 @@ The Commercial Subscription module converts free users into paying users through
 - End date
 - Renewal date
 - Cancellation status
+
+### Payment Reference
+
+- Payment reference ID
+- Student ID
+- Mutken Student ID display code
+- Subscription ID
+- Package selected
+- Amount
+- Currency
+- Payment provider
+- Payment status
+- Provider transaction reference
+- Created timestamp
+
+### Support Ticket
+
+- Support ticket ID
+- Student ID
+- Mutken Student ID display code
+- Contact name
+- Contact telephone
+- Issue type
+- Issue description
+- Related subscription ID
+- Related payment reference ID
+- Status
+- Created timestamp
 
 ### Subject
 
@@ -1234,10 +1487,16 @@ The Commercial Subscription module converts free users into paying users through
 - Student progress
 - Completion status
 
-## 19. Analytics Requirements
+## 20. Analytics Requirements
 
 ### Acquisition Metrics
 
+- Signup started
+- Signup completed
+- Signup method used: email, Google/Gmail, Facebook
+- OTP sent by channel: SMS or WhatsApp
+- OTP verification success rate
+- OTP failure rate
 - Free signups
 - First resource completed
 - First question answered
@@ -1287,7 +1546,7 @@ The Commercial Subscription module converts free users into paying users through
 - Revenue by subject
 - Failed payment rate
 
-## 20. Non-Functional Requirements
+## 21. Non-Functional Requirements
 
 ### Performance
 
@@ -1309,6 +1568,8 @@ The Commercial Subscription module converts free users into paying users through
 - Downgrades must not delete progress.
 - Video marker state must not lose answered questions or earned stars.
 - Chat reward completion must not duplicate points.
+- Student ID generation must not create duplicates.
+- OTP verification state must be reliable and auditable.
 
 ### Security
 
@@ -1317,11 +1578,21 @@ The Commercial Subscription module converts free users into paying users through
 - Teacher reward permissions must be role-based.
 - Assistant teacher reward actions must be auditable.
 - Chat content and student learning history must be protected.
+- Passwords must never be stored in plain text.
+- OTP codes must expire and be rate-limited.
+- SMS and WhatsApp OTP attempts must have abuse protection.
+- Social login provider IDs must be linked securely to one student account.
+- Telephone number changes must require re-verification.
 
-## 21. MVP Scope
+## 22. MVP Scope
 
 ### In Scope
 
+- Signup by email and password.
+- Signup/login by Google/Gmail.
+- Signup/login by Facebook.
+- Telephone OTP verification by SMS or WhatsApp.
+- Generated Mutken Student ID in student profile.
 - Free vs paid entitlement logic.
 - Monthly subject packages.
 - Study plan home screen.
@@ -1344,8 +1615,16 @@ The Commercial Subscription module converts free users into paying users through
 - Marketplace for teachers.
 - Full parent payment dashboard beyond basic subscription state.
 
-## 22. Release Readiness Checklist
+## 23. Release Readiness Checklist
 
+- Email signup works.
+- Google signup/login works.
+- Facebook signup/login works.
+- Telephone OTP verification works by SMS or WhatsApp.
+- OTP expiry, resend, and failed-attempt limits are implemented.
+- Student ID is generated uniquely.
+- Student ID appears in profile.
+- Student ID can be used in payment/support lookup.
 - Free caps defined and enforced.
 - Paid package entitlement rules implemented.
 - Subscription state controls subject access.
@@ -1367,7 +1646,7 @@ The Commercial Subscription module converts free users into paying users through
 - Upgrade prompts appear at the right moments.
 - Arabic RTL layout is verified on mobile.
 
-## 23. Open Product Decisions
+## 24. Open Product Decisions
 
 1. Final number of available subjects for launch.
 2. Whether free users can join full live sessions or only previews.
@@ -1378,3 +1657,6 @@ The Commercial Subscription module converts free users into paying users through
 7. Whether subject switching is allowed once monthly or requires support approval.
 8. Whether every resource must always have exactly 5 marker questions or whether 5 stars can be earned across a variable number of questions.
 9. Whether assistant teacher chat is human-operated, AI-assisted, or hybrid for the MVP.
+10. Whether telephone OTP should allow both SMS and WhatsApp at launch or start with one primary channel.
+11. Whether parent/guardian data should be mandatory during signup or collected later before payment.
+12. Final Mutken Student ID format.
