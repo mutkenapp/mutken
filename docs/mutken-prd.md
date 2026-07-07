@@ -26,12 +26,19 @@ Primary prototype domain: https://app.mutken.com
 16. [Module: Challenges](#16-module-challenges)
 17. [Module: Commercial Subscription](#17-module-commercial-subscription)
 18. [Module: Registration, Login, and Profile Identity](#18-module-registration-login-and-profile-identity)
-19. [Data Model Requirements](#19-data-model-requirements)
-20. [Analytics Requirements](#20-analytics-requirements)
-21. [Non-Functional Requirements](#21-non-functional-requirements)
-22. [MVP Scope](#22-mvp-scope)
-23. [Release Readiness Checklist](#23-release-readiness-checklist)
-24. [Open Product Decisions](#24-open-product-decisions)
+19. [Entitlement Matrix](#19-entitlement-matrix)
+20. [Detailed Points Event Rules](#20-detailed-points-event-rules)
+21. [Payment and Subscription Operations](#21-payment-and-subscription-operations)
+22. [Privacy, Consent, and Data Retention](#22-privacy-consent-and-data-retention)
+23. [Curriculum Catalog and Versioning](#23-curriculum-catalog-and-versioning)
+24. [Teacher Console and Assistant Teacher Operations](#24-teacher-console-and-assistant-teacher-operations)
+25. [MVP Phasing](#25-mvp-phasing)
+26. [Data Model Requirements](#26-data-model-requirements)
+27. [Analytics Requirements](#27-analytics-requirements)
+28. [Non-Functional Requirements](#28-non-functional-requirements)
+29. [MVP Scope](#29-mvp-scope)
+30. [Release Readiness Checklist](#30-release-readiness-checklist)
+31. [Open Product Decisions](#31-open-product-decisions)
 
 ## 1. Product Summary
 
@@ -793,14 +800,16 @@ Stars and points should be related but not identical:
 
 A resource is completed when:
 
-- The student reaches 5/5 stars, and
-- The required video watch threshold is met, recommended 80%.
+- The student reaches 5/5 stars.
 
-If the student answers all questions correctly but has not watched enough of the video:
+Video watch percentage is used for points, not for resource completion.
 
-- Show stars earned.
-- Keep the resource as almost complete.
-- Prompt the student to watch the remaining required video portion.
+If the student reaches 5/5 stars but has not watched enough of the video:
+
+- Mark the resource as completed.
+- Show 5/5 stars.
+- Do not award the "Watch 80% of video" points until the watch threshold is reached.
+- Prompt the student to watch the remaining video portion only as an optional points opportunity.
 
 If the student watches the video but has not earned all stars:
 
@@ -1137,7 +1146,7 @@ Mutken should support these signup methods:
 | Facebook account | Yes | Social signup and login |
 | Telephone number | Yes | Required for all accounts through OTP verification |
 
-Telephone verification is mandatory even when the student signs up with Google or Facebook.
+Telephone verification is mandatory even when the student signs up with Google/Gmail or Facebook.
 
 ### Login Methods
 
@@ -1185,7 +1194,7 @@ Minimum required data for student signup:
 | OTP verification status | Yes | Security and trust |
 | Email address | Required for email signup, optional for social signup if provided by provider | Login and communication |
 | Password | Required for email signup only | Login |
-| Social provider ID | Required for Google/Facebook signup | Social login identity |
+| Social provider ID | Required for Google/Gmail or Facebook signup | Social login identity |
 | Grade/year | Yes | Curriculum and content selection |
 | Education system | Yes | Public education curriculum alignment |
 | Country | Yes | Curriculum, pricing, and phone format |
@@ -1294,7 +1303,413 @@ The student profile should show:
 - Student ID can be used later for payment and support.
 - Duplicate email/phone cases are handled.
 
-## 19. Data Model Requirements
+## 19. Entitlement Matrix
+
+### Purpose
+
+The entitlement matrix centralizes what Free and Paid users can do. This prevents each module from interpreting limits differently.
+
+### Plan-Level Entitlements
+
+| Area | Free Plan | Paid Plan |
+| --- | --- | --- |
+| Subject access | Limited access and previews | Unlimited access for subscribed subjects |
+| Daily learning resources | 2 resources per day | Unlimited inside subscribed subjects |
+| Daily practice questions | 10 questions per day | Unlimited inside subscribed subjects |
+| Resource lesson page | Available within resource/question caps | Unlimited inside subscribed subjects |
+| Library browsing | Full curriculum structure visible | Full curriculum structure visible |
+| Library watching | Limited daily content watch cap | Unlimited inside subscribed subjects |
+| Live sessions | Limited preview or limited activity | Full access for subscribed subjects |
+| Assistant teacher chat | Limited daily guidance | Full support for subscribed subjects |
+| Points | Can earn points up to free counted-point cap | Can earn points without learning cap, with ranking anti-abuse caps |
+| Excellence board | Unlock after weekly activity threshold | Unlock after weekly activity threshold; no automatic paid bypass |
+| Progress | Basic progress | Full progress and deeper recommendations |
+| Challenges | Limited challenge participation | Full participation for subscribed subjects |
+
+### Reset Rules
+
+| Limit | Reset Cadence |
+| --- | --- |
+| Free daily resources | Daily |
+| Free daily questions | Daily |
+| Free daily assistant teacher interactions | Daily |
+| Free daily counted points | Daily |
+| Weekly excellence board points | Weekly |
+| Weekly challenge progress | Weekly |
+| Lifetime points | Never reset |
+
+### Upgrade Trigger Rules
+
+The app should show an upgrade prompt when:
+
+- A free user reaches the daily resource cap.
+- A free user reaches the daily question cap.
+- A free user reaches the Library watch/content cap.
+- A free user reaches the assistant teacher support cap.
+- A free user tries to join full live participation beyond preview rules.
+- A free user tries to access unsubscribed or locked subject content.
+- A user tries to subscribe to more subjects than the current package allows.
+
+### Entitlement Acceptance Criteria
+
+- Entitlement checks use one central rule set.
+- Entitlement decisions are consistent across Study Plan, Library, Resource Lesson Page, Live Sessions, Assistant Chat, Progress, and Challenges.
+- Upgrade prompts explain exactly which limit was reached.
+- Paid access applies only to subscribed subjects.
+- Expired subscriptions downgrade to Free Plan without deleting progress.
+
+## 20. Detailed Points Event Rules
+
+### Purpose
+
+Points must be traceable, fair, and safe from duplication. Every point increase should come from a stored event with a source and eligibility rules.
+
+### Points Event Requirements
+
+Every points event must include:
+
+- Student ID.
+- Mutken Student ID display code.
+- Source module.
+- Source entity ID, such as resource ID, question ID, live session ID, challenge ID, or chat message ID.
+- Action type.
+- Points awarded.
+- Attempt number when relevant.
+- Weekly eligibility flag.
+- Lifetime eligibility flag.
+- Ranking eligibility flag.
+- Timestamp.
+- Idempotency key.
+- Anti-abuse status.
+
+### Idempotency Rules
+
+- The same completed resource cannot award completion points more than once.
+- The same question cannot award answer points more than once for the same star/attempt result.
+- The same video cannot award "Watch 80%" points more than once.
+- The same assistant teacher reward cannot be applied twice.
+- The same live question answer cannot award points twice.
+- The same challenge completion cannot award completion points twice.
+
+### Ranking Caps
+
+Paid users can learn without daily learning caps, but ranking must stay fair.
+
+Recommended ranking caps:
+
+| Source | Ranking Cap |
+| --- | ---: |
+| Assistant teacher rewards | Max 60 ranking-eligible points per week |
+| Repeated practice in same lesson | Count first eligible completion only |
+| Live attendance | Count once per live session |
+| Live answers | Count once per question |
+| Resource completion | Count once per resource |
+
+### Resource Points Clarification
+
+- 5/5 stars completes the resource.
+- Watch percentage does not control completion.
+- Watch 80% of video awards watch points only.
+- A student can complete a resource by earning 5/5 stars even if the watch percentage points are not yet earned.
+
+### Teacher Reward Rules
+
+- Teacher rewards must be tied to a clear action.
+- Teacher rewards must require teacher or assistant teacher permission.
+- Teacher rewards must be auditable.
+- Teacher rewards should count toward lifetime points.
+- Teacher rewards should be capped for weekly ranking fairness.
+
+### Points Acceptance Criteria
+
+- Every points total can be explained through event history.
+- Duplicate events do not duplicate points.
+- Weekly points and lifetime points are stored separately.
+- Ranking eligibility is separate from point earning.
+- Free counted-point caps are enforced.
+- Paid users are not learning-capped in subscribed subjects, but ranking caps still apply.
+
+## 21. Payment and Subscription Operations
+
+### Purpose
+
+Payment operations define how subscriptions are activated, renewed, reconciled, cancelled, refunded, and supported.
+
+### Payment States
+
+| State | Meaning |
+| --- | --- |
+| Pending | Payment started but not confirmed |
+| Paid | Payment confirmed and access can activate |
+| Failed | Payment attempt failed |
+| Cancelled | Payment was cancelled before completion |
+| Refunded | Payment was returned to customer |
+| Manual review | Payment needs support verification |
+
+### Subscription States
+
+| State | Meaning |
+| --- | --- |
+| Free | No active paid subscription |
+| Active | Paid access is active |
+| Past due | Renewal/payment failed but grace period may apply |
+| Cancelled | Renewal stopped; access remains until period end |
+| Expired | Paid period ended and user is downgraded to Free |
+| Suspended | Access blocked due to abuse, fraud, or support action |
+
+### Activation Rules
+
+- Payment activation requires verified telephone number.
+- Payment record must include Mutken Student ID.
+- Paid access starts only after payment is confirmed.
+- Subject entitlements must match the purchased package.
+- Manual payment reconciliation must use Mutken Student ID plus payment reference.
+
+### Grace Period
+
+Recommended rule:
+
+- If renewal fails, keep access active for a short grace period.
+- Notify parent/student through available channels.
+- If payment is not resolved by grace period end, downgrade to Free Plan.
+- Do not delete learning history, points, or achievements.
+
+### Receipts and Support
+
+- Each successful payment should generate a payment reference.
+- Payment reference should be linked to Student ID and subscription ID.
+- Support should be able to search by Student ID, telephone number, or payment reference.
+- Receipts should show package, subjects, amount, currency, and period.
+
+### Refund Rules
+
+Refund policy must be defined before launch.
+
+Minimum requirements:
+
+- Support can mark a payment as refunded.
+- Refunded subscription access follows the approved refund policy.
+- Refunded transactions remain in history for audit.
+- Points and progress earned during the paid period are not deleted unless fraud is detected.
+
+### Payment Acceptance Criteria
+
+- A verified phone is required before activating paid subscription.
+- Payment state and subscription state are stored separately.
+- Support can reconcile payments by Student ID.
+- Failed payments do not delete progress.
+- Expired subscriptions downgrade to Free Plan automatically.
+
+## 22. Privacy, Consent, and Data Retention
+
+### Purpose
+
+Mutken handles student learning data, phone numbers, parent data, chat history, and payment records. Privacy and consent must be explicit because the product serves K-12 students.
+
+### Consent Requirements
+
+The product should capture consent for:
+
+- Account creation.
+- Terms of use.
+- Privacy policy.
+- Telephone OTP.
+- SMS/WhatsApp communication.
+- Parent/guardian communication.
+- Learning progress tracking.
+- Assistant teacher chat history.
+- Payment and support processing.
+
+### Guardian Consent
+
+Recommended business rule:
+
+- If the student is below the age threshold defined by local policy, parent/guardian consent is required.
+- Parent/guardian contact should be captured before paid subscription or sensitive account changes.
+- Support actions that expose sensitive student data require account verification.
+
+### Data Access Rules
+
+| Role | Allowed Access |
+| --- | --- |
+| Student | Own profile, progress, resources, points, chat |
+| Parent/guardian | Linked student progress, subscription, payment/support status |
+| Assistant teacher | Assigned student learning context, chat, live session participation |
+| Support | Account, payment, subscription, and support context |
+| Admin | Operational access with audit logging |
+
+### Data Retention
+
+Recommended retention rules:
+
+- Learning history remains while account is active.
+- Payment records are retained for financial audit requirements.
+- OTP codes expire quickly and are not retained as readable codes.
+- Chat history is retained for learning continuity and safety review.
+- Deleted/deactivated accounts should follow a defined retention and deletion policy.
+
+### Privacy Acceptance Criteria
+
+- Consent timestamps are stored.
+- Parent/guardian consent flow is defined.
+- Users can request account support using Student ID.
+- Sensitive support actions require identity verification.
+- Role-based access prevents unauthorized student data access.
+- Chat and teacher reward actions are auditable.
+
+## 23. Curriculum Catalog and Versioning
+
+### Purpose
+
+The Library and Study Plan depend on accurate curriculum structure. The curriculum catalog defines the official subject, semester, unit, lesson, and resource hierarchy for each grade and academic year.
+
+### Curriculum Catalog Requirements
+
+Each curriculum catalog must include:
+
+- Country.
+- Education system.
+- Academic year.
+- Grade/year.
+- Subject.
+- Semester.
+- Unit.
+- Lesson.
+- Learning resources.
+- Curriculum version.
+- Source/reference.
+- Content owner.
+- Last updated date.
+
+### Versioning Rules
+
+- Curriculum content must be versioned by academic year and subject.
+- Updates should not break existing student progress.
+- If a lesson is renamed, the system should preserve historical progress mapping.
+- If a lesson is removed, the student's completed progress remains in history.
+- New curriculum versions should be reviewed before publishing.
+
+### Ownership and Review
+
+- Product/content team owns curriculum mapping.
+- Subject matter expert reviews unit and lesson mapping.
+- Engineering owns versioned data structure and migration.
+- Assistant teachers can suggest corrections but should not directly publish curriculum changes without review.
+
+### Curriculum Acceptance Criteria
+
+- Library structure matches the selected official curriculum version.
+- Study Plan recommendations reference valid curriculum lessons.
+- Resources are linked to exact semester, unit, and lesson.
+- Curriculum changes are versioned and auditable.
+- Student progress survives curriculum updates.
+
+## 24. Teacher Console and Assistant Teacher Operations
+
+### Purpose
+
+The teacher console is the operational interface that lets assistant teachers manage live sessions, share material, send questions, guide students, and award traceable rewards.
+
+### Core Teacher Capabilities
+
+- View assigned students or live class group.
+- Start and end live session.
+- Publish shared material to the live shared area.
+- Clear shared material and return students to waiting state.
+- Send a live question or quiz.
+- Open and close question submissions.
+- Reveal answer and explanation.
+- View live answer distribution.
+- Send recommended resources in chat.
+- Send short clips in chat.
+- Award teacher effort rewards within allowed limits.
+
+### Live Session Teacher Controls
+
+The teacher can control the shared area state:
+
+- Empty/waiting.
+- Study material.
+- Quiz/question.
+- Feedback/explanation.
+
+Teacher actions should update student screens in real time.
+
+### Reward Controls
+
+- Teacher rewards require a selected reason.
+- Teacher rewards have configured min/max values.
+- Teacher rewards are capped per student per week for ranking eligibility.
+- Reward events must be auditable by support/admin.
+
+### Teacher Console Acceptance Criteria
+
+- Teacher can start a live session.
+- Teacher can share material.
+- Teacher can send and close a live question.
+- Teacher can reveal the correct answer and explanation.
+- Teacher can see submitted answers.
+- Teacher can recommend a resource or clip in chat.
+- Teacher can award capped points with an audit trail.
+
+## 25. MVP Phasing
+
+### Purpose
+
+The full PRD is larger than a first release. Phasing reduces delivery risk and keeps the first version commercially useful.
+
+### Phase 1: Commercial Learning MVP
+
+Goal: launch a paid/free learning experience that can sell subject packages.
+
+Includes:
+
+- Registration by email.
+- Telephone OTP through one primary channel.
+- Generated Mutken Student ID.
+- Free vs paid entitlement logic.
+- Monthly subject packages.
+- Study Plan.
+- Curriculum Library.
+- Resource Lesson Page with video markers, questions, stars, and points.
+- Basic Progress.
+- Upgrade prompts.
+
+### Phase 2: Engagement and Support
+
+Goal: increase retention and support learning after core subscription works.
+
+Includes:
+
+- Google/Gmail login.
+- Facebook login.
+- Assistant Teacher Chat.
+- Assistant teacher recommendations.
+- Teacher reward controls.
+- Improved progress reports.
+- Payment/support operations dashboard.
+
+### Phase 3: Live and Competition
+
+Goal: increase differentiation through live learning and community motivation.
+
+Includes:
+
+- Live Sessions.
+- Teacher Console for shared material and live questions.
+- Challenges.
+- Excellence board enhancements.
+- Advanced points ranking controls.
+- Parent reporting improvements.
+
+### Phasing Acceptance Criteria
+
+- Phase 1 can operate commercially without Phase 2 or Phase 3.
+- Each phase has testable scope.
+- Later phases do not require rebuilding the entitlement or points foundation.
+- Social login and live sessions can be delayed without blocking the paid MVP.
+
+## 26. Data Model Requirements
 
 ### Student
 
@@ -1348,6 +1763,18 @@ The student profile should show:
 - Expiry timestamp
 - Verified timestamp
 
+### Consent Record
+
+- Consent record ID
+- Student ID
+- Parent/guardian ID when applicable
+- Consent type
+- Consent status
+- Consent version
+- Accepted timestamp
+- Revoked timestamp
+- Source channel
+
 ### Subscription
 
 - Subscription ID
@@ -1362,6 +1789,22 @@ The student profile should show:
 - End date
 - Renewal date
 - Cancellation status
+
+### Entitlement
+
+- Entitlement ID
+- Student ID
+- Subscription ID
+- Plan type
+- Subject IDs allowed
+- Daily resource limit
+- Daily question limit
+- Daily assistant interaction limit
+- Library watch limit
+- Ranking cap profile
+- Start timestamp
+- End timestamp
+- Status
 
 ### Payment Reference
 
@@ -1396,16 +1839,43 @@ The student profile should show:
 - Subject ID
 - Subject name
 - Grade
+- Curriculum catalog ID
 - Progress percentage
 - Mastery percentage
 - Weak areas
 - Assigned resources
 - Live sessions
 
+### Curriculum Catalog
+
+- Curriculum catalog ID
+- Country
+- Education system
+- Academic year
+- Grade/year
+- Subject ID
+- Curriculum version
+- Source/reference
+- Content owner
+- Review status
+- Published timestamp
+
+### Curriculum Node
+
+- Curriculum node ID
+- Curriculum catalog ID
+- Parent node ID
+- Node type: semester, unit, or lesson
+- Display order
+- Name
+- Status
+- Previous version node ID
+
 ### Resource
 
 - Resource ID
 - Subject ID
+- Curriculum node ID
 - Title
 - Type
 - Duration
@@ -1474,6 +1944,40 @@ The student profile should show:
 - Participation events
 - Points awarded
 
+### Live Shared Content
+
+- Shared content ID
+- Live session ID
+- Teacher ID
+- Shared state: waiting, study material, quiz, feedback
+- Content type
+- Content payload/reference
+- Question ID when applicable
+- Open/closed status
+- Published timestamp
+- Cleared timestamp
+
+### Teacher
+
+- Teacher ID
+- Name
+- Subjects assigned
+- Role
+- Permissions
+- Status
+
+### Teacher Reward
+
+- Teacher reward ID
+- Teacher ID
+- Student ID
+- Source activity ID
+- Reason
+- Points awarded
+- Ranking eligible points
+- Created timestamp
+- Audit status
+
 ### Challenge
 
 - Challenge ID
@@ -1487,7 +1991,7 @@ The student profile should show:
 - Student progress
 - Completion status
 
-## 20. Analytics Requirements
+## 27. Analytics Requirements
 
 ### Acquisition Metrics
 
@@ -1524,6 +2028,10 @@ The student profile should show:
 - Upgrade prompt conversion by location
 - Package selection rate
 - Subject selection distribution
+- Payment started
+- Payment confirmed
+- Payment failed
+- Payment manually reconciled
 - Monthly renewal rate
 - Cancellation rate
 
@@ -1545,8 +2053,27 @@ The student profile should show:
 - Revenue by package
 - Revenue by subject
 - Failed payment rate
+- Refund rate
+- Past-due recovery rate
 
-## 21. Non-Functional Requirements
+### Teacher Operations Metrics
+
+- Live sessions started
+- Shared materials published
+- Live questions sent
+- Live question response rate
+- Teacher rewards awarded
+- Teacher rewards rejected by cap or rule
+
+### Privacy and Consent Metrics
+
+- Consent accepted
+- Consent revoked
+- Parent/guardian consent completion rate
+- Data deletion requests
+- Support identity verification success rate
+
+## 28. Non-Functional Requirements
 
 ### Performance
 
@@ -1570,6 +2097,9 @@ The student profile should show:
 - Chat reward completion must not duplicate points.
 - Student ID generation must not create duplicates.
 - OTP verification state must be reliable and auditable.
+- Payment and subscription state transitions must be auditable.
+- Curriculum updates must not erase historical student progress.
+- Live shared content updates should reach active students in real time.
 
 ### Security
 
@@ -1583,10 +2113,15 @@ The student profile should show:
 - SMS and WhatsApp OTP attempts must have abuse protection.
 - Social login provider IDs must be linked securely to one student account.
 - Telephone number changes must require re-verification.
+- Role-based access must protect student, parent, teacher, and support data.
+- Consent records and sensitive support actions must be auditable.
+- Payment/support lookup by Student ID must not expose unnecessary student data.
 
-## 22. MVP Scope
+## 29. MVP Scope
 
 ### In Scope
+
+The list below is the full commercial MVP scope. Delivery should follow the phased rollout in Section 25, with Phase 1 treated as the first build baseline.
 
 - Signup by email and password.
 - Signup/login by Google/Gmail.
@@ -1615,7 +2150,7 @@ The student profile should show:
 - Marketplace for teachers.
 - Full parent payment dashboard beyond basic subscription state.
 
-## 23. Release Readiness Checklist
+## 30. Release Readiness Checklist
 
 - Email signup works.
 - Google signup/login works.
@@ -1625,28 +2160,37 @@ The student profile should show:
 - Student ID is generated uniquely.
 - Student ID appears in profile.
 - Student ID can be used in payment/support lookup.
+- Consent records are captured and auditable.
+- Parent/guardian consent path is defined.
+- Entitlement rules use the central entitlement matrix.
+- Payment and subscription states are tested.
+- Manual payment reconciliation can use Student ID.
 - Free caps defined and enforced.
 - Paid package entitlement rules implemented.
 - Subscription state controls subject access.
 - Points events are generated from real actions.
 - Weekly points and lifetime points are separated.
+- Ranking eligibility and point earning are separated.
 - Excellence board activation rule is clear.
+- Curriculum catalog is versioned by academic year and subject.
 - Resource video markers trigger the correct questions.
 - Incorrect resource answers show explanation and hint.
 - Correct resource answers show confirmation and reasoning.
 - Resource stars complete at 5/5.
+- Watch percentage awards points but does not control resource completion.
 - Resource completion cannot duplicate stars or points.
 - Assistant teacher chat can recommend a study plan item.
 - Assistant teacher chat can recommend a short clip with reward.
 - Assistant teacher reward points are capped and traceable.
 - Live session attendance and answer points are tracked.
+- Teacher console can control the live shared area.
 - Library content locks/unlocks correctly.
 - Progress data reflects completed work.
 - Challenge rewards cannot be duplicated.
 - Upgrade prompts appear at the right moments.
 - Arabic RTL layout is verified on mobile.
 
-## 24. Open Product Decisions
+## 31. Open Product Decisions
 
 1. Final number of available subjects for launch.
 2. Whether free users can join full live sessions or only previews.
@@ -1660,3 +2204,8 @@ The student profile should show:
 10. Whether telephone OTP should allow both SMS and WhatsApp at launch or start with one primary channel.
 11. Whether parent/guardian data should be mandatory during signup or collected later before payment.
 12. Final Mutken Student ID format.
+13. Refund policy and grace period length.
+14. Data retention period for chat, progress, OTP, and payment records.
+15. Guardian consent age threshold and legal text.
+16. Curriculum source of truth and content review owner.
+17. Exact Phase 1 launch scope and timeline.
