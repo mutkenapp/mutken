@@ -6,6 +6,32 @@ Product: Mutken student learning app
 Market: Egypt / Arabic-first K-12 learning support  
 Primary prototype domain: https://app.mutken.com
 
+## Index
+
+1. [Product Summary](#1-product-summary)
+2. [Product Goals](#2-product-goals)
+3. [Target Users](#3-target-users)
+4. [Commercial Model](#4-commercial-model)
+5. [Free Plan](#5-free-plan)
+6. [Paid Plan](#6-paid-plan)
+7. [Subscription Entitlement Rules](#7-subscription-entitlement-rules)
+8. [Core Product Modules](#8-core-product-modules)
+9. [Module: Study Plan](#9-module-study-plan)
+10. [Module: Points System](#10-module-points-system)
+11. [Module: Live Sessions](#11-module-live-sessions)
+12. [Module: Library](#12-module-library)
+13. [Module: Resource Lesson Page](#13-module-resource-lesson-page)
+14. [Module: Assistant Teacher Chat](#14-module-assistant-teacher-chat)
+15. [Module: Progress](#15-module-progress)
+16. [Module: Challenges](#16-module-challenges)
+17. [Module: Commercial Subscription](#17-module-commercial-subscription)
+18. [Data Model Requirements](#18-data-model-requirements)
+19. [Analytics Requirements](#19-analytics-requirements)
+20. [Non-Functional Requirements](#20-non-functional-requirements)
+21. [MVP Scope](#21-mvp-scope)
+22. [Release Readiness Checklist](#22-release-readiness-checklist)
+23. [Open Product Decisions](#23-open-product-decisions)
+
 ## 1. Product Summary
 
 Mutken is a freemium student learning platform that helps students know exactly what to study today, follow a subject-based learning journey, attend live sessions, collect points, track progress, and compete in a fair excellence board.
@@ -190,9 +216,11 @@ The first commercial version should include these modules:
 2. Points System
 3. Live Sessions
 4. Library
-5. Progress
-6. Challenges
-7. Commercial Subscription
+5. Resource Lesson Page
+6. Assistant Teacher Chat
+7. Progress
+8. Challenges
+9. Commercial Subscription
 
 ## 9. Module: Study Plan
 
@@ -484,7 +512,242 @@ Students can explore content beyond today's plan and continue learning by topic,
 - Free plan caps are enforced.
 - Paid subject entitlements are enforced.
 
-## 13. Module: Progress
+## 13. Module: Resource Lesson Page
+
+### Purpose
+
+The Resource Lesson Page is the focused learning experience for one video lesson. It combines video, timeline question markers, interactive questions, stars, points, and immediate feedback.
+
+### User Value
+
+Students learn inside the video instead of passively watching. Questions appear at the exact moment they are relevant, so the student connects the explanation with practice.
+
+### Core Features
+
+- Video player with play, pause, and progress timeline.
+- Question markers on the video timeline.
+- Each marker is linked to a specific question.
+- Question counter, for example Question 1/5.
+- Lesson title and duration.
+- Star progress, for example 0/5 correct.
+- Lesson points panel.
+- Question answer choices.
+- Correct answer confirmation.
+- Incorrect answer explanation.
+- Hint after incorrect attempt.
+- Points by attempt quality.
+- Resource completion state.
+
+### Video Marker Behavior
+
+Each video contains time-based markers. A marker means that the question is relevant at that exact time in the video.
+
+Required behavior:
+
+- When the video reaches a marker, the video pauses and the related question appears.
+- If the video is paused, the student can tap/click any marker to open the related question.
+- If a question has already been answered, tapping the marker should show the answered state and explanation.
+- The student should be able to return to the relevant video moment after answering.
+- Markers should visually show status:
+  - Not reached
+  - Current question
+  - Correct
+  - Incorrect / needs retry
+
+### Question Behavior
+
+Questions are multiple choice in the current prototype direction.
+
+When the student answers incorrectly:
+
+- The app should not only say "wrong".
+- The app should explain why the answer is incorrect.
+- The app should provide a hint that helps the student find the correct answer.
+- The student should be allowed to try again.
+- Points decrease by attempt count, but learning should continue.
+
+When the student answers correctly:
+
+- The app should confirm the answer is correct.
+- The app should explain why it is correct.
+- The app should award points based on attempt quality.
+- The app should award one star for the question if the star was not already earned.
+
+### Star Completion Rule
+
+Stars are the resource completion mechanic.
+
+Recommended rule:
+
+- Each resource has 5 required stars.
+- Each correct question earns 1 star.
+- A resource is completed when the student earns 5/5 stars.
+- Stars are not removed after being earned.
+- Re-answering an already completed question should not duplicate points or stars.
+
+### Points Rules
+
+Stars and points should be related but not identical:
+
+- Stars show completion.
+- Points show effort, accuracy, and quality.
+
+| Action | Points |
+| --- | ---: |
+| Watch 80% of video | +10 |
+| Complete resource or lesson | +20 |
+| Finish post-video questions | +25 |
+| 80%+ accuracy | +20 |
+| Correct on first try | +10 |
+| Correct on second try | +6 |
+| Correct after hint | +3 |
+
+### Completion Rules
+
+A resource is completed when:
+
+- The student reaches 5/5 stars, and
+- The required video watch threshold is met, recommended 80%.
+
+If the student answers all questions correctly but has not watched enough of the video:
+
+- Show stars earned.
+- Keep the resource as almost complete.
+- Prompt the student to watch the remaining required video portion.
+
+If the student watches the video but has not earned all stars:
+
+- Keep the resource in progress.
+- Prompt the student to answer remaining marker questions.
+
+### Free vs Paid Rules
+
+Free users:
+
+- Can open resource pages within the daily free resource cap.
+- Can answer questions within the daily free question cap.
+- Can earn stars and points until the daily cap is reached.
+
+Paid users:
+
+- Have unlimited resource access for subscribed subjects.
+- Have unlimited questions for subscribed subjects.
+- Can complete all resource stars without daily cap friction.
+
+### Acceptance Criteria
+
+- Video shows timeline markers.
+- Marker opens the correct linked question.
+- Reaching a marker pauses the video and shows the question.
+- Clicking a marker while paused shows the related question.
+- Incorrect answers show explanation and hint.
+- Correct answers show confirmation and reasoning.
+- Correct answers increase stars.
+- 5/5 stars marks the resource as completed.
+- Points are awarded once per eligible action.
+- Repeating the same question does not duplicate points.
+
+## 14. Module: Assistant Teacher Chat
+
+### Purpose
+
+Assistant Teacher Chat gives the student a direct guidance channel with the assistant teacher. It should feel personal, supportive, and connected to the student's study plan, progress, and mistakes.
+
+### User Value
+
+Students can ask for help when stuck, receive short targeted explanations, and get guided back to the right study task.
+
+### Core Features
+
+- Assistant teacher profile header.
+- Online status.
+- Chat conversation.
+- Assistant-initiated study plan recommendations.
+- Study plan deep link card.
+- Progress improvement messages.
+- Student question composer.
+- Attachment or clip card from the assistant.
+- Short video clip recommendation.
+- Reward prompt for completing the suggested clip.
+- Assistant teacher reward points.
+
+### Conversation Examples
+
+The assistant teacher can send:
+
+- A greeting using the student's name.
+- A prepared daily study plan.
+- A recommendation to focus on a specific task because of recent mistakes.
+- A progress message, such as improvement from 68% to 82%.
+- A short explanation for a question the student does not understand.
+- A 30-second video clip linked to the relevant concept.
+- A reward message, such as "Complete the clip to earn +10".
+
+### Business Rules
+
+- Chat is connected to the student's active subject, study plan, progress, and weak areas.
+- Free users receive limited daily assistant teacher interactions.
+- Paid users receive full assistant teacher support for subscribed subjects.
+- Assistant teacher messages should guide students to action, not only answer questions.
+- Assistant teacher rewards must be capped and traceable.
+- Rewards should be based on effort and completion, not manual favoritism.
+
+### Assistant Teacher Reward Rules
+
+| Action | Points |
+| --- | ---: |
+| Complete recommended task | +20 |
+| Fix mistake after feedback | +15 |
+| Ask for help and finish explanation | +10 |
+| Complete recommended short clip | +10 |
+| Teacher effort reward | +10 to +30 |
+
+### Recommended Chat Actions
+
+The assistant teacher should be able to recommend:
+
+- Continue today's study plan.
+- Watch a specific resource.
+- Answer a marker question again.
+- Review a mistake.
+- Join the next live session.
+- Complete a challenge.
+- Watch a short clip.
+
+### Guardrails
+
+- The assistant should not simply give final answers without explanation.
+- The assistant should provide hints before revealing full reasoning when appropriate.
+- Reward points should be awarded only after the student completes the recommended action.
+- Chat rewards should count toward weekly points but be capped for ranking fairness.
+- Chat history should remain visible for student review.
+
+### Free vs Paid Rules
+
+Free users:
+
+- Limited daily messages.
+- Limited short clip recommendations.
+- Limited reward opportunities.
+
+Paid users:
+
+- Full chat support for subscribed subjects.
+- Unlimited guidance within reasonable anti-abuse limits.
+- Full assistant reward eligibility.
+
+### Acceptance Criteria
+
+- Student can open chat with assistant teacher.
+- Student can send a question.
+- Assistant can recommend a study plan item.
+- Assistant can send a short video clip card.
+- Student can earn points by completing the recommended action.
+- Free users hit a daily chat/support limit.
+- Paid users have full support for subscribed subjects.
+- Assistant reward events are stored as points events.
+
+## 15. Module: Progress
 
 ### Purpose
 
@@ -538,7 +801,7 @@ Students and parents can understand whether learning is improving and what needs
 - Student can see achievements.
 - Student receives a recommended next action.
 
-## 14. Module: Challenges
+## 16. Module: Challenges
 
 ### Purpose
 
@@ -604,7 +867,7 @@ The app should show:
 - Student can see whether excellence board is locked or unlocked.
 - Student can see ranking after activation.
 
-## 15. Module: Commercial Subscription
+## 17. Module: Commercial Subscription
 
 ### Purpose
 
@@ -639,6 +902,8 @@ The Commercial Subscription module converts free users into paying users through
 
 - Home Study Plan when daily cap is reached.
 - Library when opening content beyond cap.
+- Resource Lesson Page when question or resource caps are reached.
+- Assistant Teacher Chat when daily free support is used.
 - Subject page when trying to access locked subjects.
 - Live Sessions when trying to join full session.
 - Progress page when trying to view deeper reports.
@@ -658,7 +923,7 @@ The Commercial Subscription module converts free users into paying users through
 - Cancelled users keep paid access until the end of the billing period.
 - Expired users downgrade to Free without losing progress.
 
-## 16. Data Model Requirements
+## 18. Data Model Requirements
 
 ### Student
 
@@ -711,6 +976,39 @@ The Commercial Subscription module converts free users into paying users through
 - Status
 - Points available
 - Points earned
+- Video marker timestamps
+- Required stars
+- Stars earned
+- Watch percentage
+- Completion status
+
+### Resource Question
+
+- Question ID
+- Resource ID
+- Marker timestamp
+- Question text
+- Answer choices
+- Correct answer
+- Incorrect-answer explanation
+- Correct-answer explanation
+- Hint
+- Attempt count
+- Star awarded flag
+
+### Chat Message
+
+- Message ID
+- Student ID
+- Assistant teacher ID
+- Subject ID
+- Sender type
+- Message text
+- Linked resource ID
+- Linked study plan item ID
+- Linked video clip
+- Reward points available
+- Reward completion status
 
 ### Points Event
 
@@ -751,7 +1049,7 @@ The Commercial Subscription module converts free users into paying users through
 - Student progress
 - Completion status
 
-## 17. Analytics Requirements
+## 19. Analytics Requirements
 
 ### Acquisition Metrics
 
@@ -767,6 +1065,11 @@ The Commercial Subscription module converts free users into paying users through
 - Weekly active students
 - Resources completed per student
 - Questions answered per student
+- Resource stars earned
+- Marker questions answered
+- Incorrect answers corrected after hint
+- Assistant teacher chat messages
+- Assistant recommended clips completed
 - Live sessions joined
 - Challenge participation
 - Study streak length
@@ -785,6 +1088,9 @@ The Commercial Subscription module converts free users into paying users through
 - Accuracy by subject
 - Mastery improvement
 - Weak area improvement
+- Marker question accuracy
+- First-try correct answer rate
+- Hint-to-correct conversion rate
 - Challenge completion
 - Live participation accuracy
 
@@ -796,7 +1102,7 @@ The Commercial Subscription module converts free users into paying users through
 - Revenue by subject
 - Failed payment rate
 
-## 18. Non-Functional Requirements
+## 20. Non-Functional Requirements
 
 ### Performance
 
@@ -816,14 +1122,18 @@ The Commercial Subscription module converts free users into paying users through
 - Points events must be traceable.
 - Subscription state must be accurate.
 - Downgrades must not delete progress.
+- Video marker state must not lose answered questions or earned stars.
+- Chat reward completion must not duplicate points.
 
 ### Security
 
 - Payment state must be verified server-side.
 - Users should not be able to edit their own points directly.
 - Teacher reward permissions must be role-based.
+- Assistant teacher reward actions must be auditable.
+- Chat content and student learning history must be protected.
 
-## 19. MVP Scope
+## 21. MVP Scope
 
 ### In Scope
 
@@ -831,9 +1141,11 @@ The Commercial Subscription module converts free users into paying users through
 - Monthly subject packages.
 - Study plan home screen.
 - Library resources.
+- Resource lesson page with video markers, questions, stars, and answer feedback.
 - Points system.
 - Excellence board activation.
 - Live session prototype flow.
+- Assistant teacher chat with study plan recommendations and rewardable clips.
 - Progress summary.
 - Weekly challenges.
 - Assistant teacher reward rules.
@@ -847,7 +1159,7 @@ The Commercial Subscription module converts free users into paying users through
 - Marketplace for teachers.
 - Full parent payment dashboard beyond basic subscription state.
 
-## 20. Release Readiness Checklist
+## 22. Release Readiness Checklist
 
 - Free caps defined and enforced.
 - Paid package entitlement rules implemented.
@@ -855,6 +1167,14 @@ The Commercial Subscription module converts free users into paying users through
 - Points events are generated from real actions.
 - Weekly points and lifetime points are separated.
 - Excellence board activation rule is clear.
+- Resource video markers trigger the correct questions.
+- Incorrect resource answers show explanation and hint.
+- Correct resource answers show confirmation and reasoning.
+- Resource stars complete at 5/5.
+- Resource completion cannot duplicate stars or points.
+- Assistant teacher chat can recommend a study plan item.
+- Assistant teacher chat can recommend a short clip with reward.
+- Assistant teacher reward points are capped and traceable.
 - Live session attendance and answer points are tracked.
 - Library content locks/unlocks correctly.
 - Progress data reflects completed work.
@@ -862,7 +1182,7 @@ The Commercial Subscription module converts free users into paying users through
 - Upgrade prompts appear at the right moments.
 - Arabic RTL layout is verified on mobile.
 
-## 21. Open Product Decisions
+## 23. Open Product Decisions
 
 1. Final number of available subjects for launch.
 2. Whether free users can join full live sessions or only previews.
@@ -871,4 +1191,5 @@ The Commercial Subscription module converts free users into paying users through
 5. Payment provider for Egypt.
 6. Whether parents receive progress reports inside the app, by email, or by WhatsApp.
 7. Whether subject switching is allowed once monthly or requires support approval.
-
+8. Whether every resource must always have exactly 5 marker questions or whether 5 stars can be earned across a variable number of questions.
+9. Whether assistant teacher chat is human-operated, AI-assisted, or hybrid for the MVP.
