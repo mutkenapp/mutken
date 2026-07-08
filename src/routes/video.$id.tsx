@@ -1,6 +1,18 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, CheckCircle2, XCircle, Play, Pause, Star, Lightbulb, Coins } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  Play,
+  Pause,
+  Star,
+  Lightbulb,
+  Coins,
+  RotateCcw,
+  Clock3,
+  LockKeyhole,
+} from "lucide-react";
 import { useLanguage } from "@/lib/language";
 import { getVideo, lessonVideos, type LessonVideo } from "@/lib/videos";
 import { MobileShell } from "@/components/mobile-shell";
@@ -12,7 +24,10 @@ export const Route = createFileRoute("/video/$id")({
     return {
       meta: [
         { title: v ? `${v.title.en} — Mutken` : "Video — Mutken" },
-        { name: "description", content: "Watch the lesson video and answer the related questions." },
+        {
+          name: "description",
+          content: "Watch the lesson video and answer the related questions.",
+        },
       ],
     };
   },
@@ -22,7 +37,12 @@ export const Route = createFileRoute("/video/$id")({
     return v;
   },
   notFoundComponent: () => (
-    <div className="p-6 text-center text-sm">Video not found. <Link to="/" className="text-blue underline">Back to plan</Link></div>
+    <div className="p-6 text-center text-sm">
+      Video not found.{" "}
+      <Link to="/" className="text-blue underline">
+        Back to plan
+      </Link>
+    </div>
   ),
   errorComponent: ({ error }) => (
     <div className="p-6 text-center text-sm text-destructive">{error.message}</div>
@@ -39,6 +59,7 @@ function VideoPage() {
   const [playing, setPlaying] = useState(true);
 
   const total = video.questions.length;
+  const requiredStars = 5;
 
   const isSolved = (i: number) => {
     const list = attempts[i];
@@ -47,8 +68,10 @@ function VideoPage() {
   };
 
   const correctCount = video.questions.reduce((n, _, i) => n + (isSolved(i) ? 1 : 0), 0);
-  const finished = video.questions.every((_, i) => isSolved(i));
-  const perfect = finished && correctCount === total;
+  const earnedStars = Math.min(correctCount, requiredStars);
+  const finished = earnedStars >= requiredStars;
+  const solvedQuestions = video.questions.every((_, i) => isSolved(i));
+  const perfect = solvedQuestions && Object.values(attempts).every((list) => list.length === 1);
 
   const markers = video.questions.map((_, i) => ((i + 1) / (total + 1)) * 100);
   const progressPct = markers[current] ?? 0;
@@ -58,6 +81,17 @@ function VideoPage() {
   const tried = attempts[current] ?? [];
   const lastPick = tried.length > 0 ? tried[tried.length - 1] : undefined;
   const solved = isSolved(current);
+  const markerTime = getMarkerTimeLabel(video.duration.en, markers[current] ?? 0, lang);
+  const attemptedQuestionCount = Object.keys(attempts).length;
+  const firstTryCorrectCount = video.questions.reduce((n, _, i) => {
+    const list = attempts[i];
+    return n + (list?.length === 1 && isSolved(i) ? 1 : 0);
+  }, 0);
+  const firstTryAccuracy = total > 0 ? Math.round((firstTryCorrectCount / total) * 100) : 0;
+  const watch80Earned = progressPct >= 80;
+  const completionEarned = finished;
+  const postQuestionsEarned = solvedQuestions;
+  const accuracyEarned = solvedQuestions && firstTryAccuracy >= 80;
 
   const currentIdx = lessonVideos.findIndex((v) => v.id === video.id);
   const next = lessonVideos.slice(currentIdx + 1).find((v) => v.status !== "locked");
@@ -76,276 +110,460 @@ function VideoPage() {
 
   return (
     <MobileShell>
-    <div className="bg-background flex flex-col">
-      {/* Prototype video — constrained to app width */}
-      <div className="relative w-full max-w-[440px] mx-auto aspect-video bg-black overflow-hidden">
-        <img src={thumb} alt={video.title[lang]} className="absolute inset-0 h-full w-full object-cover opacity-70" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
+      <div className="bg-background flex flex-col">
+        {/* Prototype video — constrained to app width */}
+        <div className="relative w-full max-w-[440px] mx-auto aspect-video bg-black overflow-hidden">
+          <img
+            src={thumb}
+            alt={video.title[lang]}
+            className="absolute inset-0 h-full w-full object-cover opacity-70"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
 
-        <Link
-          to="/"
-          className="absolute top-3 left-3 z-10 h-9 w-9 rounded-full bg-black/60 backdrop-blur flex items-center justify-center text-white"
-          aria-label="Back"
-        >
-          <ArrowLeft className={`h-4 w-4 ${dir === "rtl" ? "rotate-180" : ""}`} />
-        </Link>
+          <Link
+            to="/"
+            className="absolute top-3 left-3 z-10 h-9 w-9 rounded-full bg-black/60 backdrop-blur flex items-center justify-center text-white"
+            aria-label="Back"
+          >
+            <ArrowLeft className={`h-4 w-4 ${dir === "rtl" ? "rotate-180" : ""}`} />
+          </Link>
 
-        <button
-          type="button"
-          onClick={() => setPlaying((p) => !p)}
-          className="absolute inset-0 flex items-center justify-center"
-          aria-label={playing ? "Pause" : "Play"}
-        >
-          <span className="h-16 w-16 rounded-full bg-white/95 flex items-center justify-center shadow-glow">
-            {playing ? (
-              <Pause className="h-6 w-6 text-navy fill-navy" />
-            ) : (
-              <Play className="h-6 w-6 text-navy fill-navy ml-1" />
-            )}
-          </span>
-        </button>
-
-        <div className="absolute bottom-3 inset-x-3">
-          <div className="text-[10px] text-white/80 mb-1.5 flex justify-between font-medium">
-            <span>
-              {lang === "ar" ? "سؤال" : "Question"} {current + 1}/{total}
+          <button
+            type="button"
+            onClick={() => setPlaying((p) => !p)}
+            className="absolute inset-0 flex items-center justify-center"
+            aria-label={playing ? "Pause" : "Play"}
+          >
+            <span className="h-16 w-16 rounded-full bg-white/95 flex items-center justify-center shadow-glow">
+              {playing ? (
+                <Pause className="h-6 w-6 text-navy fill-navy" />
+              ) : (
+                <Play className="h-6 w-6 text-navy fill-navy ml-1" />
+              )}
             </span>
-            <span>{video.duration[lang]}</span>
-          </div>
-          <div className="relative h-1.5 rounded-full bg-white/25">
-            <div
-              className="absolute inset-y-0 left-0 rounded-full bg-mint"
-              style={{ width: `${progressPct}%` }}
-            />
-            {markers.map((pos, i) => {
-              const active = i === current;
-              const done = isSolved(i);
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setCurrent(i)}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 top-1/2"
-                  style={{ left: `${pos}%` }}
-                  aria-label={`Question ${i + 1}`}
-                >
-                  <span
-                    className={`block rounded-full border-2 border-navy transition-all ${
-                      active
-                        ? "h-4 w-4 bg-mint shadow-mint"
-                        : done
-                        ? "h-3 w-3 bg-mint"
-                        : "h-3 w-3 bg-white/50"
-                    }`}
-                  />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+          </button>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-5 pt-4 pb-32 max-w-[440px] mx-auto">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            {lang === "ar" ? "درس" : "Lesson"} · {video.duration[lang]}
-          </p>
-          <h1 className="text-lg font-bold leading-tight mt-1">{video.title[lang]}</h1>
-
-          {/* Live star progress */}
-          <div className="mt-3 rounded-2xl bg-gradient-to-br from-navy to-navy/90 text-white p-3 flex items-center justify-between shadow-soft">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">
-                {lang === "ar" ? "نجومك" : "Your Stars"}
-              </p>
-              <p className="text-[11px] opacity-80 mt-0.5">
-                {correctCount}/{total} {lang === "ar" ? "إجابة صحيحة" : "correct"}
-              </p>
+          <div className="absolute bottom-3 inset-x-3">
+            <div className="text-[10px] text-white/80 mb-1.5 flex justify-between font-medium">
+              <span>
+                {lang === "ar" ? "سؤال" : "Question"} {current + 1}/{total}
+              </span>
+              <span>{video.duration[lang]}</span>
             </div>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: total }).map((_, i) => {
-                const filled = i < correctCount;
+            <div className="relative h-1.5 rounded-full bg-white/25">
+              <div
+                className="absolute inset-y-0 left-0 rounded-full bg-mint"
+                style={{ width: `${progressPct}%` }}
+              />
+              {markers.map((pos, i) => {
+                const active = i === current;
+                const done = isSolved(i);
+                const needsRetry = hasWrongOpenAttempt(attempts[i], video.questions[i].answer);
                 return (
-                  <Star
+                  <button
                     key={i}
-                    className={`h-5 w-5 transition-all duration-300 ${
-                      filled ? "text-mint fill-mint scale-110" : "text-white/25"
-                    }`}
-                  />
+                    type="button"
+                    onClick={() => {
+                      setCurrent(i);
+                      setPlaying(false);
+                    }}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 top-1/2"
+                    style={{ left: `${pos}%` }}
+                    aria-label={`${lang === "ar" ? "سؤال" : "Question"} ${i + 1}`}
+                  >
+                    <span
+                      className={`block rounded-full border-2 transition-all ${
+                        active
+                          ? "h-4 w-4 border-white bg-blue shadow-mint"
+                          : done
+                            ? "h-3.5 w-3.5 border-white bg-success"
+                            : needsRetry
+                              ? "h-3.5 w-3.5 border-white bg-warn"
+                              : "h-3 w-3 border-navy bg-white/50"
+                      }`}
+                    />
+                  </button>
                 );
               })}
             </div>
-          </div>
-
-          <div className="mt-3 rounded-2xl bg-card border border-border p-3 shadow-soft">
-            <div className="flex items-center justify-between gap-3 mb-2.5">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {lang === "ar" ? "نقاط هذا الدرس" : "Lesson points"}
-                </p>
-                <p className="text-sm font-semibold">
-                  {lang === "ar" ? "المشاهدة + الأسئلة + الدقة" : "Watch + questions + accuracy"}
-                </p>
-              </div>
-              <Coins className="h-4 w-4 text-navy" />
+            <div className="mt-2 grid grid-cols-4 gap-1 text-[9px] text-white/75">
+              <MarkerLegend color="bg-white/50" text={lang === "ar" ? "لم يبدأ" : "Not reached"} />
+              <MarkerLegend color="bg-blue" text={lang === "ar" ? "الحالي" : "Current"} />
+              <MarkerLegend color="bg-success" text={lang === "ar" ? "صحيح" : "Correct"} />
+              <MarkerLegend color="bg-warn" text={lang === "ar" ? "إعادة" : "Retry"} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {resourcePointRules.map((rule) => (
-                <div key={rule.label.en} className="rounded-xl bg-muted/60 p-2">
-                  <p className="text-[10px] text-muted-foreground leading-tight">{rule.label[lang]}</p>
-                  <p className="mt-1 text-xs font-bold text-navy">{rule.points}</p>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-5 pt-4 pb-44 max-w-[440px] mx-auto">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {lang === "ar" ? "درس" : "Lesson"} · {video.duration[lang]}
+            </p>
+            <h1 className="text-lg font-bold leading-tight mt-1">{video.title[lang]}</h1>
+
+            <div className="mt-3 rounded-2xl bg-gradient-to-br from-navy to-navy/90 text-white p-3 shadow-soft">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">
+                    {lang === "ar" ? "نجومك" : "Your Stars"}
+                  </p>
+                  <p className="text-[11px] opacity-80 mt-0.5">
+                    {earnedStars}/{requiredStars}{" "}
+                    {lang === "ar"
+                      ? "نجوم - ٥ نجوم تكمل المورد"
+                      : "stars - 5 stars complete the resource"}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {finished ? (
-            <ResultCard
-              perfect={perfect}
-              correct={correctCount}
-              total={total}
-              lang={lang}
-              onRetry={resetAll}
-              next={next}
-            />
-          ) : (
-            <>
-              <div className="mt-4 flex items-center justify-between">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {lang === "ar" ? "سؤال" : "Question"} {current + 1} / {total}
-                </p>
-                <span className="text-[11px] text-muted-foreground">
-                  {tried.length > 0 && !solved
-                    ? `${tried.length} ${lang === "ar" ? "محاولة" : "attempts"}`
-                    : ""}
-                </span>
-              </div>
-
-              <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar">
-                {answerPointRules.map((rule) => (
-                  <div key={rule.label.en} className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 shadow-soft">
-                    <span className="text-[10px] text-muted-foreground">{rule.label[lang]}</span>
-                    <span className="ms-1 text-[11px] font-bold text-navy">{rule.points}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-3 rounded-2xl bg-card border border-border p-4 shadow-soft">
-                <p className="font-semibold text-[15px] mb-3">{q.q[lang]}</p>
-                <div className="space-y-2">
-                  {q.options.map((opt, oi) => {
-                    const wasTried = tried.includes(oi);
-                    const isCorrect = q.answer === oi;
-                    const showCorrect = solved && isCorrect;
-                    const showWrong = wasTried && !isCorrect;
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: requiredStars }).map((_, i) => {
+                    const filled = i < earnedStars;
                     return (
-                      <button
-                        key={oi}
-                        type="button"
-                        disabled={wasTried || solved}
-                        onClick={() => pickOption(oi)}
-                        className={`w-full text-start rounded-xl border px-3 py-2.5 text-sm flex items-center justify-between gap-2 transition ${
-                          showCorrect
-                            ? "border-success bg-success/10"
-                            : showWrong
-                            ? "border-destructive bg-destructive/10 opacity-70"
-                            : "border-border bg-card hover:bg-muted"
+                      <Star
+                        key={i}
+                        className={`h-5 w-5 transition-all duration-300 ${
+                          filled ? "text-mint fill-mint scale-110" : "text-white/25"
                         }`}
-                      >
-                        <span>{opt[lang]}</span>
-                        {showCorrect && <CheckCircle2 className="h-4 w-4 text-success" />}
-                        {showWrong && <XCircle className="h-4 w-4 text-destructive" />}
-                      </button>
+                      />
                     );
                   })}
                 </div>
-
-                {/* Feedback for the latest pick */}
-                {lastPick !== undefined && (
-                  <div
-                    className={`mt-3 rounded-xl p-3 text-[13px] flex items-start gap-2 ${
-                      solved
-                        ? "bg-success/10 border border-success/30 text-success-foreground"
-                        : "bg-destructive/10 border border-destructive/30"
-                    }`}
-                  >
-                    {solved ? (
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" />
-                    ) : (
-                      <Lightbulb className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-                    )}
-                    <p className="leading-snug">
-                      {q.explanations[lastPick]?.[lang] ??
-                        (solved
-                          ? lang === "ar"
-                            ? "ممتاز! إجابة صحيحة."
-                            : "Excellent! Correct answer."
-                          : lang === "ar"
-                          ? "إجابة غير صحيحة. حاول مرة أخرى!"
-                          : "Not quite right. Try again!")}
-                    </p>
-                  </div>
-                )}
-                {solved && (
-                  <div className="mt-3 rounded-xl bg-mint/15 border border-mint/40 p-3 flex items-center justify-between gap-3">
-                    <p className="text-xs font-semibold text-navy">
-                      {tried.length === 1
-                        ? lang === "ar"
-                          ? "مكافأة إجابة من أول محاولة"
-                          : "First-try answer reward"
-                        : lang === "ar"
-                          ? "مكافأة التصحيح بعد المحاولة"
-                          : "Retry-and-fix reward"}
-                    </p>
-                    <span className="rounded-full bg-mint px-2 py-1 text-xs font-bold text-navy">
-                      {tried.length === 1 ? "+10" : tried.length === 2 ? "+6" : "+3"}
-                    </span>
-                  </div>
-                )}
               </div>
-            </>
-          )}
-        </div>
-      </div>
-
-    </div>
-
-      {/* Action bar above bottom nav */}
-      {!finished && (
-        <div className="fixed bottom-16 inset-x-0 z-20 pointer-events-none flex justify-center">
-          <div className="w-full max-w-[440px] pointer-events-auto border-t border-border bg-card/95 backdrop-blur">
-            <div className="p-3 flex gap-2">
-              {solved ? (
-                <button
-                  onClick={() => setCurrent((c) => Math.min(c + 1, total - 1))}
-                  disabled={current === total - 1 && !finished}
-                  className="flex-1 rounded-2xl bg-hero text-primary-foreground text-sm py-3.5 font-semibold shadow-glow disabled:opacity-50"
-                >
-                  {current === total - 1
-                    ? lang === "ar"
-                      ? "عرض النتيجة"
-                      : "See Result"
-                    : lang === "ar"
-                    ? "السؤال التالي"
-                    : "Next Question"}
-                </button>
-              ) : (
-                <div className="flex-1 rounded-2xl bg-muted text-muted-foreground text-xs py-3.5 font-medium text-center">
-                  {tried.length === 0
-                    ? lang === "ar"
-                      ? "اختر إجابة"
-                      : "Choose an answer"
-                    : lang === "ar"
-                    ? "حاول مرة أخرى للوصول للإجابة الصحيحة"
-                    : "Keep trying until you find the correct answer"}
+              <div className="mt-3">
+                <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-mint transition-all"
+                    style={{ width: `${(earnedStars / requiredStars) * 100}%` }}
+                  />
                 </div>
-              )}
+                <p className="mt-2 text-[11px] opacity-80">
+                  {finished
+                    ? lang === "ar"
+                      ? "تم إكمال المورد. المشاهدة تبقى فرصة نقاط إضافية إذا لم تحصل عليها."
+                      : "Resource completed. Watch progress remains an extra points opportunity if not earned."
+                    : lang === "ar"
+                      ? `أكمل ${toArabicDigits(String(requiredStars - earnedStars))} ${requiredStars - earnedStars === 1 ? "نجمة" : "نجوم"} لإنهاء المورد.`
+                      : `Earn ${requiredStars - earnedStars} more ${requiredStars - earnedStars === 1 ? "star" : "stars"} to complete the resource.`}
+                </p>
+              </div>
             </div>
+
+            <div className="mt-3 rounded-2xl bg-card border border-border p-3 shadow-soft">
+              <div className="flex items-center justify-between gap-3 mb-2.5">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {lang === "ar" ? "نقاط هذا الدرس" : "Lesson points"}
+                  </p>
+                  <p className="text-sm font-semibold">
+                    {lang === "ar" ? "المشاهدة + الأسئلة + الدقة" : "Watch + questions + accuracy"}
+                  </p>
+                </div>
+                <Coins className="h-4 w-4 text-navy" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {resourcePointRules.map((rule, index) => {
+                  const state = getResourcePointState(index, {
+                    watch80Earned,
+                    completionEarned,
+                    postQuestionsEarned,
+                    accuracyEarned,
+                  });
+                  return (
+                    <div key={rule.label.en} className="rounded-xl bg-muted/60 p-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-[10px] text-muted-foreground leading-tight">
+                          {rule.label[lang]}
+                        </p>
+                        <PointStatusBadge state={state} lang={lang} />
+                      </div>
+                      <p className="mt-1 text-xs font-bold text-navy">{rule.points}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
+                {lang === "ar"
+                  ? "النقاط تمنح مرة واحدة فقط لكل إجراء، حتى لو أعدت مشاهدة الفيديو أو أعدت السؤال."
+                  : "Points are awarded once per action, even if you replay the video or revisit a question."}
+              </p>
+            </div>
+
+            {finished ? (
+              <ResultCard
+                perfect={perfect}
+                correct={earnedStars}
+                total={requiredStars}
+                lang={lang}
+                onRetry={resetAll}
+                next={next}
+                watch80Earned={watch80Earned}
+                firstTryAccuracy={firstTryAccuracy}
+              />
+            ) : (
+              <>
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    {lang === "ar" ? "سؤال" : "Question"} {current + 1} / {total}
+                  </p>
+                  <span className="text-[11px] text-muted-foreground">
+                    {tried.length > 0 && !solved
+                      ? `${tried.length} ${lang === "ar" ? "محاولة" : "attempts"}`
+                      : ""}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {answerPointRules.map((rule) => (
+                    <div
+                      key={rule.label.en}
+                      className="flex flex-1 min-w-[150px] items-center justify-between gap-2 rounded-full border border-border bg-card px-3 py-1.5 shadow-soft"
+                    >
+                      <span className="text-[10px] text-muted-foreground">{rule.label[lang]}</span>
+                      <span className="text-[11px] font-bold text-navy">{rule.points}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-3 rounded-2xl bg-card border border-border p-4 shadow-soft">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-blue/10 px-3 py-1.5 text-[11px] font-semibold text-blue">
+                      <Clock3 className="h-3.5 w-3.5" />
+                      {lang === "ar" ? `مرتبط بالدقيقة ${markerTime}` : `Linked to ${markerTime}`}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPlaying(false)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-[11px] font-semibold text-navy"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      {lang === "ar" ? "ارجع للشرح" : "Return to explanation"}
+                    </button>
+                  </div>
+                  <p className="font-semibold text-[15px] mb-3">{q.q[lang]}</p>
+                  <div className="space-y-2">
+                    {q.options.map((opt, oi) => {
+                      const wasTried = tried.includes(oi);
+                      const isCorrect = q.answer === oi;
+                      const showCorrect = solved && isCorrect;
+                      const showWrong = wasTried && !isCorrect;
+                      return (
+                        <button
+                          key={oi}
+                          type="button"
+                          disabled={wasTried || solved}
+                          onClick={() => pickOption(oi)}
+                          className={`w-full text-start rounded-xl border px-3 py-2.5 text-sm flex items-center justify-between gap-2 transition ${
+                            showCorrect
+                              ? "border-success bg-success/10"
+                              : showWrong
+                                ? "border-destructive bg-destructive/10 opacity-70"
+                                : "border-border bg-card hover:bg-muted"
+                          }`}
+                        >
+                          <span>{opt[lang]}</span>
+                          {showCorrect && <CheckCircle2 className="h-4 w-4 text-success" />}
+                          {showWrong && <XCircle className="h-4 w-4 text-destructive" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {lastPick !== undefined && (
+                    <div
+                      className={`mt-3 rounded-xl p-3 text-[13px] ${
+                        solved
+                          ? "bg-success/10 border border-success/30 text-success-foreground"
+                          : "bg-destructive/10 border border-destructive/30"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        {solved ? (
+                          <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" />
+                        ) : (
+                          <Lightbulb className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold">
+                            {solved
+                              ? lang === "ar"
+                                ? "إجابة صحيحة"
+                                : "Correct answer"
+                              : lang === "ar"
+                                ? "لماذا الإجابة غير صحيحة؟"
+                                : "Why this is incorrect"}
+                          </p>
+                          <p className="mt-1 leading-snug">
+                            {q.explanations[lastPick]?.[lang] ??
+                              (solved
+                                ? lang === "ar"
+                                  ? "ممتاز! إجابة صحيحة."
+                                  : "Excellent! Correct answer."
+                                : lang === "ar"
+                                  ? "إجابة غير صحيحة. حاول مرة أخرى!"
+                                  : "Not quite right. Try again!")}
+                          </p>
+                          {!solved && (
+                            <p className="mt-2 rounded-lg bg-white/60 px-2 py-1.5 text-[12px] leading-snug">
+                              <span className="font-bold">
+                                {lang === "ar" ? "تلميح: " : "Hint: "}
+                              </span>
+                              {lang === "ar"
+                                ? "ارجع إلى الرقم أو المفهوم في السؤال، ثم قارن بين البسط والمقام قبل الاختيار."
+                                : "Return to the number or concept in the question, then compare numerator and denominator before choosing."}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {solved && (
+                    <div className="mt-3 rounded-xl bg-mint/15 border border-mint/40 p-3 flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold text-navy">
+                        {tried.length === 1
+                          ? lang === "ar"
+                            ? "مكافأة إجابة من أول محاولة"
+                            : "First-try answer reward"
+                          : lang === "ar"
+                            ? "مكافأة التصحيح بعد المحاولة"
+                            : "Retry-and-fix reward"}
+                      </p>
+                      <span className="rounded-full bg-mint px-2 py-1 text-xs font-bold text-navy">
+                        {tried.length === 1 ? "+10" : tried.length === 2 ? "+6" : "+3"}
+                      </span>
+                    </div>
+                  )}
+                  <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+                    {solved
+                      ? lang === "ar"
+                        ? "تم حفظ النجمة لهذا السؤال. إعادة فتح العلامة تعرض الشرح ولا تكرر النقاط."
+                        : "This question star is saved. Reopening the marker shows the explanation without duplicating points."
+                      : lang === "ar"
+                        ? "استمر في المحاولة. التعلم مستمر حتى تصل للإجابة الصحيحة."
+                        : "Keep trying. Learning continues until you reach the correct answer."}
+                  </p>
+
+                  <div className="mt-4">
+                    {solved ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrent((c) => Math.min(c + 1, total - 1));
+                          setPlaying(false);
+                        }}
+                        disabled={current === total - 1 && !finished}
+                        className="w-full rounded-2xl bg-hero text-primary-foreground text-sm py-3.5 font-semibold shadow-glow disabled:opacity-50"
+                      >
+                        {current === total - 1
+                          ? lang === "ar"
+                            ? "عرض النتيجة"
+                            : "See Result"
+                          : lang === "ar"
+                            ? "السؤال التالي"
+                            : "Next Question"}
+                      </button>
+                    ) : (
+                      <div className="w-full rounded-2xl bg-muted text-muted-foreground text-xs py-3.5 font-medium text-center">
+                        {tried.length === 0
+                          ? lang === "ar"
+                            ? "اختر إجابة"
+                            : "Choose an answer"
+                          : lang === "ar"
+                            ? "حاول مرة أخرى للوصول للإجابة الصحيحة"
+                            : "Keep trying until you find the correct answer"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </MobileShell>
   );
+}
+
+type PointState = "earned" | "available" | "locked";
+
+function MarkerLegend({ color, text }: { color: string; text: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 min-w-0">
+      <span className={`h-2 w-2 rounded-full ${color}`} />
+      <span className="truncate">{text}</span>
+    </span>
+  );
+}
+
+function PointStatusBadge({ state, lang }: { state: PointState; lang: "en" | "ar" }) {
+  const label =
+    state === "earned"
+      ? lang === "ar"
+        ? "تم"
+        : "Earned"
+      : state === "available"
+        ? lang === "ar"
+          ? "متاح"
+          : "Open"
+        : lang === "ar"
+          ? "مغلق"
+          : "Locked";
+
+  const className =
+    state === "earned"
+      ? "bg-success/15 text-navy"
+      : state === "available"
+        ? "bg-blue/10 text-blue"
+        : "bg-muted text-muted-foreground";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold ${className}`}
+    >
+      {state === "earned" ? (
+        <CheckCircle2 className="h-3 w-3" />
+      ) : state === "locked" ? (
+        <LockKeyhole className="h-3 w-3" />
+      ) : null}
+      {label}
+    </span>
+  );
+}
+
+function getResourcePointState(
+  index: number,
+  state: {
+    watch80Earned: boolean;
+    completionEarned: boolean;
+    postQuestionsEarned: boolean;
+    accuracyEarned: boolean;
+  },
+): PointState {
+  if (index === 0) return state.watch80Earned ? "earned" : "available";
+  if (index === 1) return state.completionEarned ? "earned" : "locked";
+  if (index === 2) return state.postQuestionsEarned ? "earned" : "locked";
+  if (index === 3) return state.accuracyEarned ? "earned" : "locked";
+  return "available";
+}
+
+function hasWrongOpenAttempt(list: number[] | undefined, correctAnswer: number) {
+  if (!list || list.length === 0) return false;
+  return list[list.length - 1] !== correctAnswer;
+}
+
+function getMarkerTimeLabel(durationEn: string, markerPercent: number, lang: "en" | "ar") {
+  const minuteMatch = durationEn.match(/\d+/);
+  const durationMinutes = minuteMatch ? Number(minuteMatch[0]) : 8;
+  const totalSeconds = durationMinutes * 60;
+  const markerSeconds = Math.max(0, Math.round(totalSeconds * (markerPercent / 100)));
+  const minutes = Math.floor(markerSeconds / 60);
+  const seconds = String(markerSeconds % 60).padStart(2, "0");
+  const label = `${minutes}:${seconds}`;
+  return lang === "ar" ? toArabicDigits(label) : label;
+}
+
+function toArabicDigits(value: string) {
+  const digits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+  return value.replace(/\d/g, (digit) => digits[Number(digit)]);
 }
 
 function ResultCard({
@@ -355,6 +573,8 @@ function ResultCard({
   lang,
   onRetry,
   next,
+  watch80Earned,
+  firstTryAccuracy,
 }: {
   perfect: boolean;
   correct: number;
@@ -362,20 +582,21 @@ function ResultCard({
   lang: "en" | "ar";
   onRetry: () => void;
   next: LessonVideo | undefined;
+  watch80Earned: boolean;
+  firstTryAccuracy: number;
 }) {
   const pct = correct / total;
   const stars = Math.round(pct * 5);
   return (
     <div className="mt-5 rounded-3xl bg-hero text-primary-foreground p-6 shadow-glow text-center relative overflow-hidden">
-      <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-mint/25 blur-2xl" />
       <p className="text-[11px] font-bold uppercase tracking-widest opacity-80">
         {perfect
           ? lang === "ar"
             ? "إنجاز مثالي"
             : "Perfect Score"
           : lang === "ar"
-          ? "أحسنت"
-          : "Well Done"}
+            ? "أحسنت"
+            : "Well Done"}
       </p>
       <p className="mt-1 text-2xl font-bold">
         {correct}/{total}
@@ -399,8 +620,8 @@ function ResultCard({
             ? "خمس نجوم — أجبت على كل الأسئلة بشكل صحيح!"
             : "Five stars — you answered every question correctly!"
           : lang === "ar"
-          ? "جرّب مرة أخرى للحصول على الخمس نجوم"
-          : "Try again to earn all five stars"}
+            ? "جرّب مرة أخرى للحصول على الخمس نجوم"
+            : "Try again to earn all five stars"}
       </p>
       <div className="mt-4 rounded-2xl bg-white/10 p-3 text-start">
         <div className="flex items-center justify-between gap-3">
@@ -416,6 +637,24 @@ function ResultCard({
             ? "تشمل مشاهدة المورد، إكمال الأسئلة، ومكافأة الدقة."
             : "Includes resource completion, question completion, and accuracy bonus."}
         </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-white/10 px-3 py-2">
+            <p className="text-[10px] opacity-70">
+              {lang === "ar" ? "دقة أول محاولة" : "First-try accuracy"}
+            </p>
+            <p className="mt-0.5 text-sm font-bold">
+              {lang === "ar"
+                ? `${toArabicDigits(String(firstTryAccuracy))}%`
+                : `${firstTryAccuracy}%`}
+            </p>
+          </div>
+          <div className="rounded-xl bg-white/10 px-3 py-2">
+            <p className="text-[10px] opacity-70">{lang === "ar" ? "مشاهدة ٨٠٪" : "Watch 80%"}</p>
+            <p className="mt-0.5 text-sm font-bold">
+              {watch80Earned ? (lang === "ar" ? "تم" : "Earned") : lang === "ar" ? "متاح" : "Open"}
+            </p>
+          </div>
+        </div>
       </div>
       <div className="mt-5 flex gap-2">
         <button
