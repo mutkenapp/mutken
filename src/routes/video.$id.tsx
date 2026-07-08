@@ -12,7 +12,6 @@ import {
   RotateCcw,
   Clock3,
   LockKeyhole,
-  Info,
   X,
 } from "lucide-react";
 import { useLanguage } from "@/lib/language";
@@ -210,7 +209,7 @@ function VideoPage() {
                 className="h-9 w-9 flex-shrink-0 rounded-full border border-border bg-card shadow-soft flex items-center justify-center text-navy active:scale-95"
                 aria-label={lang === "ar" ? "شرح النقاط" : "Points information"}
               >
-                <Info className="h-4 w-4" />
+                <Coins className="h-4 w-4" />
               </button>
             </div>
 
@@ -261,15 +260,6 @@ function VideoPage() {
                     style={{ width: `${(earnedStars / requiredStars) * 100}%` }}
                   />
                 </div>
-                <p className="mt-2 text-[11px] opacity-80">
-                  {finished
-                    ? lang === "ar"
-                      ? "تم إكمال المورد. المشاهدة تبقى فرصة نقاط إضافية إذا لم تحصل عليها."
-                      : "Resource completed. Watch progress remains an extra points opportunity if not earned."
-                    : lang === "ar"
-                      ? `أكمل ${toArabicDigits(String(requiredStars - earnedStars))} ${requiredStars - earnedStars === 1 ? "نجمة" : "نجوم"} لإنهاء المورد.`
-                      : `Earn ${requiredStars - earnedStars} more ${requiredStars - earnedStars === 1 ? "star" : "stars"} to complete the resource.`}
-                </p>
               </div>
             </div>
 
