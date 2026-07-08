@@ -12,6 +12,8 @@ import {
   RotateCcw,
   Clock3,
   LockKeyhole,
+  Info,
+  X,
 } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 import { getVideo, lessonVideos, type LessonVideo } from "@/lib/videos";
@@ -57,6 +59,7 @@ function VideoPage() {
   // Per-question: array of option indices the student has clicked (in order)
   const [attempts, setAttempts] = useState<Record<number, number[]>>({});
   const [playing, setPlaying] = useState(true);
+  const [showPointsInfo, setShowPointsInfo] = useState(false);
 
   const total = video.questions.length;
   const requiredStars = 5;
@@ -82,7 +85,6 @@ function VideoPage() {
   const lastPick = tried.length > 0 ? tried[tried.length - 1] : undefined;
   const solved = isSolved(current);
   const markerTime = getMarkerTimeLabel(video.duration.en, markers[current] ?? 0, lang);
-  const attemptedQuestionCount = Object.keys(attempts).length;
   const firstTryCorrectCount = video.questions.reduce((n, _, i) => {
     const list = attempts[i];
     return n + (list?.length === 1 && isSolved(i) ? 1 : 0);
@@ -196,11 +198,34 @@ function VideoPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="px-5 pt-4 pb-44 max-w-[440px] mx-auto">
+          <div className="px-5 pt-4 pb-28 max-w-[440px] mx-auto">
             <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               {lang === "ar" ? "درس" : "Lesson"} · {video.duration[lang]}
             </p>
-            <h1 className="text-lg font-bold leading-tight mt-1">{video.title[lang]}</h1>
+            <div className="mt-1 flex items-start justify-between gap-3">
+              <h1 className="text-lg font-bold leading-tight">{video.title[lang]}</h1>
+              <button
+                type="button"
+                onClick={() => setShowPointsInfo(true)}
+                className="h-9 w-9 flex-shrink-0 rounded-full border border-border bg-card shadow-soft flex items-center justify-center text-navy active:scale-95"
+                aria-label={lang === "ar" ? "شرح النقاط" : "Points information"}
+              >
+                <Info className="h-4 w-4" />
+              </button>
+            </div>
+
+            {showPointsInfo && (
+              <PointsInfoPopup
+                lang={lang}
+                onClose={() => setShowPointsInfo(false)}
+                resourceStates={{
+                  watch80Earned,
+                  completionEarned,
+                  postQuestionsEarned,
+                  accuracyEarned,
+                }}
+              />
+            )}
 
             <div className="mt-3 rounded-2xl bg-gradient-to-br from-navy to-navy/90 text-white p-3 shadow-soft">
               <div className="flex items-center justify-between gap-3">
@@ -248,46 +273,6 @@ function VideoPage() {
               </div>
             </div>
 
-            <div className="mt-3 rounded-2xl bg-card border border-border p-3 shadow-soft">
-              <div className="flex items-center justify-between gap-3 mb-2.5">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    {lang === "ar" ? "نقاط هذا الدرس" : "Lesson points"}
-                  </p>
-                  <p className="text-sm font-semibold">
-                    {lang === "ar" ? "المشاهدة + الأسئلة + الدقة" : "Watch + questions + accuracy"}
-                  </p>
-                </div>
-                <Coins className="h-4 w-4 text-navy" />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {resourcePointRules.map((rule, index) => {
-                  const state = getResourcePointState(index, {
-                    watch80Earned,
-                    completionEarned,
-                    postQuestionsEarned,
-                    accuracyEarned,
-                  });
-                  return (
-                    <div key={rule.label.en} className="rounded-xl bg-muted/60 p-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-[10px] text-muted-foreground leading-tight">
-                          {rule.label[lang]}
-                        </p>
-                        <PointStatusBadge state={state} lang={lang} />
-                      </div>
-                      <p className="mt-1 text-xs font-bold text-navy">{rule.points}</p>
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
-                {lang === "ar"
-                  ? "النقاط تمنح مرة واحدة فقط لكل إجراء، حتى لو أعدت مشاهدة الفيديو أو أعدت السؤال."
-                  : "Points are awarded once per action, even if you replay the video or revisit a question."}
-              </p>
-            </div>
-
             {finished ? (
               <ResultCard
                 perfect={perfect}
@@ -310,18 +295,6 @@ function VideoPage() {
                       ? `${tried.length} ${lang === "ar" ? "محاولة" : "attempts"}`
                       : ""}
                   </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {answerPointRules.map((rule) => (
-                    <div
-                      key={rule.label.en}
-                      className="flex flex-1 min-w-[150px] items-center justify-between gap-2 rounded-full border border-border bg-card px-3 py-1.5 shadow-soft"
-                    >
-                      <span className="text-[10px] text-muted-foreground">{rule.label[lang]}</span>
-                      <span className="text-[11px] font-bold text-navy">{rule.points}</span>
-                    </div>
-                  ))}
                 </div>
 
                 <div className="mt-3 rounded-2xl bg-card border border-border p-4 shadow-soft">
@@ -484,6 +457,102 @@ function VideoPage() {
 }
 
 type PointState = "earned" | "available" | "locked";
+
+function PointsInfoPopup({
+  lang,
+  onClose,
+  resourceStates,
+}: {
+  lang: "en" | "ar";
+  onClose: () => void;
+  resourceStates: {
+    watch80Earned: boolean;
+    completionEarned: boolean;
+    postQuestionsEarned: boolean;
+    accuracyEarned: boolean;
+  };
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-navy/35 px-5 py-8 flex items-start justify-center"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="mt-24 w-full max-w-[400px] rounded-2xl border border-border bg-card p-4 shadow-glow"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {lang === "ar" ? "شرح النقاط" : "Points guide"}
+            </p>
+            <h2 className="mt-0.5 text-base font-bold text-navy">
+              {lang === "ar" ? "المشاهدة + الأسئلة + الدقة" : "Watch + questions + accuracy"}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-navy"
+            aria-label={lang === "ar" ? "إغلاق" : "Close"}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-4">
+          <div className="flex items-center gap-2">
+            <Coins className="h-4 w-4 text-blue" />
+            <p className="text-sm font-bold text-navy">
+              {lang === "ar" ? "نقاط المورد" : "Resource points"}
+            </p>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {resourcePointRules.map((rule, index) => {
+              const state = getResourcePointState(index, resourceStates);
+              return (
+                <div key={rule.label.en} className="rounded-xl bg-muted/60 p-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[10px] leading-tight text-muted-foreground">
+                      {rule.label[lang]}
+                    </p>
+                    <PointStatusBadge state={state} lang={lang} />
+                  </div>
+                  <p className="mt-1 text-xs font-bold text-navy">{rule.points}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <p className="text-sm font-bold text-navy">
+            {lang === "ar" ? "نقاط الإجابة" : "Answer points"}
+          </p>
+          <div className="mt-2 space-y-2">
+            {answerPointRules.map((rule) => (
+              <div
+                key={rule.label.en}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2"
+              >
+                <p className="text-xs text-muted-foreground">{rule.label[lang]}</p>
+                <p className="text-sm font-bold text-navy">{rule.points}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="mt-4 rounded-xl bg-blue/10 px-3 py-2 text-[11px] leading-snug text-blue">
+          {lang === "ar"
+            ? "النقاط تمنح مرة واحدة فقط لكل إجراء، حتى لو أعدت مشاهدة الفيديو أو أعدت السؤال."
+            : "Points are awarded once per action, even if you replay the video or revisit a question."}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function MarkerLegend({ color, text }: { color: string; text: string }) {
   return (
