@@ -255,6 +255,10 @@ Students do not need to search or decide what to study. The app creates a clear 
   - In progress
   - To do
   - Locked
+- Recommendation reason for each item, written in student-friendly language.
+- Learning objective or weak area linked to each recommended item when applicable.
+- Teacher-pinned task support for urgent assistant teacher recommendations.
+- Plan completion summary that shows improved objectives, remaining weak areas, and the next recommended action.
 
 ### Business Rules
 
@@ -263,6 +267,69 @@ Students do not need to search or decide what to study. The app creates a clear 
 - Unsubscribed subjects should be visible but locked with an upgrade message.
 - Each completed study plan item can generate points.
 - Completing the full daily journey should provide a bonus.
+- The Study Plan must be generated from current curriculum position, entitlement, learning evidence, objective mastery, confidence score, weak areas, teacher recommendations, upcoming live sessions, and daily workload limits.
+- Mastery must be recalculated before a new Study Plan is generated.
+- The active Study Plan should remain stable while the student is working. The system may append a small review item when needed, but larger regeneration should happen after full plan completion, after a live session, or during the daily refresh.
+- Every Study Plan item must include a reason, such as weak objective, unfinished resource, upcoming live preparation, live recap, teacher-pinned task, spaced review, or next curriculum step.
+- The Study Plan can include locked items, but each locked item must show a clear entitlement or cap reason and a relevant upgrade prompt.
+- The assistant teacher should not manually review every Study Plan. Teacher review is required only for flagged cases such as repeated weakness across multiple sources, sharp mastery drop, passive video watching with failed questions, inactivity, student help request, or parent/support escalation.
+- Teacher-pinned items override the normal recommendation ranking and should remain auditable.
+- Points, stars, and mastery are related but separate. Points reward behavior, stars complete a resource, and mastery measures learning understanding.
+
+### Mastery-Driven Recommendation Rules
+
+| Student Situation | Study Plan Behavior |
+| --- | --- |
+| Current resource is incomplete | Continue the unfinished resource first |
+| Resource has 0-2 stars | Recommend easier review content or prerequisite practice |
+| Resource has 3-4 stars | Recommend missed marker retry or targeted practice |
+| Resource has 5/5 stars and objective mastery is sufficient | Move to the next resource, next lesson, or challenge |
+| Low mastery or low confidence | Recommend remedial clip, targeted library practice, or mini verification quiz |
+| Same objective missed in video, library, and live quiz | Add remediation and flag for teacher review |
+| Watched video but failed marker questions | Recommend shorter explanation clip and retry questions |
+| Upcoming live session | Add live preparation item when relevant |
+| Recently completed live session with missed questions | Add live recap and targeted practice |
+| Free cap reached | Keep useful recommendations visible but locked with upgrade reason |
+
+### Study Plan Item Types
+
+| Item Type | Example |
+| --- | --- |
+| Continue resource | Continue unfinished video |
+| Resource clip | Watch a short remedial explanation |
+| Full video lesson | Watch next or remedial lesson |
+| Marker retry | Retry missed embedded questions |
+| Library practice | Practice 5-10 targeted questions |
+| Live preparation | Prepare before upcoming live session |
+| Live recap | Review missed live questions |
+| Teacher task | Complete assistant teacher recommendation |
+| Diagnostic mini-quiz | Verify mastery before moving forward |
+| Spaced review | Review an older objective |
+| Challenge | Advanced activity for strong students |
+| Next lesson | Continue curriculum sequence |
+
+### Study Plan Ranking Priority
+
+1. Teacher-pinned urgent task.
+2. Critical weak prerequisite.
+3. Recently failed objective across multiple sources.
+4. Incomplete current resource.
+5. Live recap from recent session.
+6. Preparation for upcoming live session.
+7. Targeted library practice.
+8. Next lesson when mastery is sufficient.
+9. Spaced review.
+10. Challenge or enrichment.
+
+### Study Plan Completion Rules
+
+- Completing the final plan item creates a plan completion event.
+- The system recalculates affected objective mastery and weak areas.
+- The student receives a completion summary that shows what improved, what still needs practice, and what comes next.
+- If the target objective is mastered with enough confidence, the next plan can move forward.
+- If the student improves but is not mastered, the next plan should include short practice.
+- If the student repeatedly fails, the next plan should add remediation and may request teacher review.
+- If a weak prerequisite exists, the next plan should review the prerequisite before continuing the main sequence.
 
 ### Study Plan Point Opportunities
 
@@ -286,10 +353,14 @@ Students do not need to search or decide what to study. The app creates a clear 
 - The student can select a subject.
 - The student sees today's resources for that subject.
 - Resource status is clear.
+- Every study plan item has a clear reason.
+- Weak-area and mastery-driven recommendations appear when evidence indicates the student needs review.
 - The next meeting date and time are visible.
 - Weekly progress toward excellence board activation is visible.
 - Free users hit a cap after the allowed number of resources.
 - Paid users do not hit the daily cap within subscribed subjects.
+- Locked plan items show the reason they are locked and the upgrade action.
+- Completing the daily plan returns a summary and a next-plan preview or next recommended action.
 
 ## 10. Module: Points System
 
@@ -535,6 +606,10 @@ When the assistant teacher shares a question:
 - Viewing study material during live sessions can support learning progress but should not award the same points as answering correctly.
 - Quiz participation should be traceable to the specific live session and question.
 - If the shared area is empty, students can earn attendance/time points only through valid session attendance rules, not through shared-content actions.
+- Live quiz questions must be linked to learning objectives so answers can update mastery.
+- Attendance is low engagement evidence. Correct live answers, concept checks, and exit-ticket answers are stronger mastery evidence.
+- After a live session ends, the system should generate a live learning summary with attended status, questions answered, correct answers, weak objectives, strong objectives, and recommended next action.
+- If the student misses live questions or performs weakly on a live objective, the Study Plan should generate a live recap with missed-question retry, short remedial clip, and targeted practice when appropriate.
 
 ### Live Session Rewards
 
@@ -679,6 +754,11 @@ Examples:
 - Lesson completion should be calculated from completion of its required learning resources.
 - Unit progress should be calculated from completed lessons inside the unit.
 - Semester progress should be calculated from completed units/lessons inside the semester.
+- Library practice questions must be linked to learning objectives.
+- Library practice is a strong mastery signal because it measures independent practice outside the video flow.
+- High Library accuracy should increase mastery and confidence. Repeated mistakes in the same objective should update weak areas and influence the next Study Plan.
+- Correct answers after previous errors should show recovery and increase mastery confidence over time.
+- Library results should support several practice modes: lesson practice, weak-area practice, unit review, missed-question retry, spaced review, and challenge practice.
 
 ### Library Point Opportunities
 
@@ -731,6 +811,8 @@ Students learn inside the video instead of passively watching. Questions appear 
 - Hint after incorrect attempt.
 - Points by attempt quality.
 - Resource completion state.
+- Learning objective mapping for each marker question.
+- Mastery evidence generated from watch progress, marker answers, hint usage, attempts, and resource completion.
 
 ### Video Marker Behavior
 
@@ -766,6 +848,16 @@ When the student answers correctly:
 - The app should explain why it is correct.
 - The app should award points based on attempt quality.
 - The app should award one star for the question if the star was not already earned.
+
+### Mastery Impact
+
+- Watching a video is engagement evidence, not mastery by itself.
+- Watching 80%+ can add low positive evidence and award points, but it must not mark an objective as mastered.
+- Answering marker questions correctly is medium-to-strong mastery evidence.
+- Incorrect marker answers are negative evidence for the linked objective.
+- Correct after hint or after multiple attempts is positive evidence, but with lower confidence than a first-attempt correct answer.
+- Rewatching a weak segment can indicate effort and possible difficulty.
+- Resource completion at 5/5 stars is a strong progress signal, but objective mastery still depends on the quality and diversity of evidence.
 
 ### Star Completion Rule
 
@@ -975,12 +1067,45 @@ Students and parents can understand whether learning is improving and what needs
 - Weekly points reset weekly.
 - Lifetime achievements remain.
 - Subject mastery should update based on completed resources, quiz accuracy, and challenge performance.
+- The primary mastery level is learning objective mastery. Subject, unit, and lesson mastery should roll up from objective mastery.
+- Mastery must include both a mastery score and a confidence score.
+- A high mastery score with low confidence should not automatically move the student forward.
+- Confidence should increase when evidence is repeated across diverse sources such as resource questions, Library practice, live quizzes, and teacher-validated tasks.
+- One correct answer should not mark an objective as mastered, and one wrong answer should not destroy mastery.
+- Watching content alone must not be enough to mark mastery as complete.
+- Mastery should decay lightly over time or trigger spaced review when a student has not practiced an objective for a long period.
+- Weak areas should be created when mastery is low, confidence is low, repeated incorrect answers exist, prerequisite mastery is weak, or multiple evidence sources show the same weakness.
+
+### Mastery Status Scale
+
+| Mastery Score | Status | Meaning |
+| ---: | --- | --- |
+| 0-30 | Critical Weakness | Student likely does not understand |
+| 31-50 | Weak | Student needs remediation |
+| 51-70 | Developing | Student partially understands |
+| 71-84 | Good | Student mostly understands |
+| 85-100 | Mastered | Student can move forward with later review |
+
+### Learning Evidence Sources
+
+| Source | Mastery Role |
+| --- | --- |
+| Resource watch progress | Low positive engagement evidence |
+| Resource marker question | Medium-to-strong objective evidence |
+| Library practice question | Strong independent practice evidence |
+| Live quiz question | Medium-to-strong real-time evidence |
+| Diagnostic quiz | Strong initial placement evidence |
+| Assistant teacher task | Medium-to-strong teacher-guided evidence |
+| Challenge question | Medium evidence, adjusted by difficulty |
+| Hint usage | Lowers confidence compared with first-attempt correct |
+| Attempt count | Multiple attempts reduce confidence but still show recovery |
 
 ### Suggested Progress Metrics
 
 | Metric | Description |
 | --- | --- |
-| Mastery | Weighted score by subject/topic |
+| Mastery | Weighted score by learning objective, rolled up to lesson, unit, and subject |
+| Confidence | Reliability of the mastery estimate based on evidence quantity and diversity |
 | Accuracy | Correct answers divided by total answers |
 | Completion | Completed resources divided by assigned resources |
 | Consistency | Days active per week |
@@ -992,6 +1117,8 @@ Students and parents can understand whether learning is improving and what needs
 
 - Student can see overall mastery.
 - Student can see subject-level mastery.
+- Student can see weak objective status in simple language.
+- Student can see whether mastery confidence is low when more practice is needed.
 - Student can identify weak areas.
 - Student can see weekly points and source breakdown.
 - Student can see achievements.
@@ -1576,10 +1703,38 @@ Each curriculum catalog must include:
 - Unit.
 - Lesson.
 - Learning resources.
+- Learning objectives.
+- Objective prerequisites.
+- Resource-to-objective mapping.
+- Question-to-objective mapping.
+- Video marker-to-objective mapping.
+- Live question-to-objective mapping when live content is used.
 - Curriculum version.
 - Source/reference.
 - Content owner.
 - Last updated date.
+
+### Learning Objective Mapping Requirements
+
+Every meaningful learning item must map to one or more learning objectives.
+
+| Item | Mapping Requirement |
+| --- | --- |
+| Video resource | Must map to at least one objective |
+| Video marker | Must map to the objective being checked at that timestamp |
+| Resource question | Must have one primary objective and optional secondary objectives |
+| Library question | Must have one primary objective and optional secondary objectives |
+| Live quiz question | Must map to the live concept being checked |
+| Assistant teacher task | Must map to the objective it is intended to improve |
+| Challenge question | Must map to the advanced or review objective being assessed |
+
+Publishing should be blocked or warned when:
+
+- A lesson has no learning objectives.
+- A resource has no objective mapping.
+- A question has no primary objective.
+- A video marker has no linked question or objective.
+- A required lesson objective has no question coverage.
 
 ### Versioning Rules
 
@@ -1601,6 +1756,8 @@ Each curriculum catalog must include:
 - Library structure matches the selected official curriculum version.
 - Study Plan recommendations reference valid curriculum lessons.
 - Resources are linked to exact semester, unit, and lesson.
+- Learning objectives and objective mappings are present before publishing.
+- Each lesson shows coverage by objective, including videos, questions, and live quiz links where available.
 - Curriculum changes are versioned and auditable.
 - Student progress survives curriculum updates.
 
@@ -1871,6 +2028,39 @@ Includes:
 - Status
 - Previous version node ID
 
+### Learning Objective
+
+- Learning objective ID
+- Subject ID
+- Curriculum node ID
+- Arabic title
+- English title
+- Arabic description
+- English description
+- Difficulty level
+- Academic year
+- Status
+- Created timestamp
+- Updated timestamp
+
+### Objective Prerequisite
+
+- Objective prerequisite ID
+- Learning objective ID
+- Prerequisite learning objective ID
+- Required mastery score
+- Created timestamp
+
+### Objective Mapping
+
+- Mapping ID
+- Source type: resource, video marker, resource question, Library question, live question, assistant task, or challenge question
+- Source ID
+- Learning objective ID
+- Primary objective flag
+- Mapping weight
+- Created timestamp
+
 ### Resource
 
 - Resource ID
@@ -1898,11 +2088,89 @@ Includes:
 - Question text
 - Answer choices
 - Correct answer
+- Primary learning objective ID
+- Secondary learning objective IDs
+- Difficulty level
+- Mastery weight
 - Incorrect-answer explanation
 - Correct-answer explanation
 - Hint
 - Attempt count
 - Star awarded flag
+
+### Learning Event
+
+- Learning event ID
+- Student ID
+- Subject ID
+- Learning objective ID
+- Source type: resource watch, resource marker question, Library question, live quiz question, assistant teacher task, challenge question, diagnostic quiz, or spaced review
+- Source ID
+- Event type
+- Correctness flag when applicable
+- Evidence score
+- Difficulty level
+- Attempt number
+- Hint used flag
+- Time spent in seconds
+- Evidence weight
+- Idempotency key
+- Created timestamp
+
+### Student Objective Mastery
+
+- Student objective mastery ID
+- Student ID
+- Learning objective ID
+- Mastery score
+- Confidence score
+- Status: critical weakness, weak, developing, good, or mastered
+- Evidence count
+- Last learning event ID
+- Last practiced timestamp
+- Last updated timestamp
+
+### Weak Area Summary
+
+- Weak area summary ID
+- Student ID
+- Subject ID
+- Learning objective ID
+- Severity
+- Reason
+- Evidence summary
+- First detected timestamp
+- Last detected timestamp
+- Status
+
+### Study Plan Run
+
+- Study plan run ID
+- Student ID
+- Subject ID
+- Generated timestamp
+- Trigger type
+- Status
+- Generator version
+- Teacher review status
+- Completion summary
+
+### Study Plan Item
+
+- Study plan item ID
+- Study plan run ID
+- Item type
+- Resource ID when applicable
+- Question set ID when applicable
+- Live session ID when applicable
+- Teacher task ID when applicable
+- Learning objective ID
+- Priority
+- Recommendation reason
+- Estimated minutes
+- Lock state
+- Status
+- Completed timestamp
 
 ### Chat Message
 
@@ -1978,6 +2246,17 @@ Includes:
 - Created timestamp
 - Audit status
 
+### Teacher Plan Review
+
+- Teacher plan review ID
+- Study plan run ID
+- Student ID
+- Teacher ID
+- Review status
+- Teacher notes
+- Created timestamp
+- Updated timestamp
+
 ### Challenge
 
 - Challenge ID
@@ -2039,12 +2318,23 @@ Includes:
 
 - Accuracy by subject
 - Mastery improvement
+- Objective-level mastery score
+- Objective confidence score
+- Evidence count by objective
+- Evidence diversity by source
 - Weak area improvement
+- Weak objectives by grade and subject
+- Mastery improvement by plan item type
+- Videos watched but failed questions
+- Questions with high wrong-answer rate
 - Marker question accuracy
 - First-try correct answer rate
 - Hint-to-correct conversion rate
+- Recovery after previous errors
+- Spaced review completion
 - Challenge completion
 - Live participation accuracy
+- Live sessions that improve mastery
 
 ### Monetization Metrics
 
@@ -2131,6 +2421,8 @@ The list below is the full commercial MVP scope. Delivery should follow the phas
 - Free vs paid entitlement logic.
 - Monthly subject packages.
 - Study plan home screen.
+- Objective-based mastery and weak-area summaries.
+- Learning evidence events from resources, Library practice, live quizzes, assistant teacher tasks, and challenges.
 - Library resources.
 - Resource lesson page with video markers, questions, stars, and answer feedback.
 - Points system.
@@ -2168,6 +2460,11 @@ The list below is the full commercial MVP scope. Delivery should follow the phas
 - Free caps defined and enforced.
 - Paid package entitlement rules implemented.
 - Subscription state controls subject access.
+- Learning objectives exist for launch content.
+- Questions, resources, video markers, live questions, and teacher tasks are mapped to objectives where applicable.
+- Learning evidence events are created from student answers and resource progress.
+- Mastery score and confidence score update from evidence.
+- Study Plan recommendations use mastery, confidence, weak areas, teacher recommendations, and entitlement.
 - Points events are generated from real actions.
 - Weekly points and lifetime points are separated.
 - Ranking eligibility and point earning are separated.
@@ -2178,6 +2475,7 @@ The list below is the full commercial MVP scope. Delivery should follow the phas
 - Correct resource answers show confirmation and reasoning.
 - Resource stars complete at 5/5.
 - Watch percentage awards points but does not control resource completion.
+- Watch percentage alone does not mark mastery as complete.
 - Resource completion cannot duplicate stars or points.
 - Assistant teacher chat can recommend a study plan item.
 - Assistant teacher chat can recommend a short clip with reward.
@@ -2209,3 +2507,9 @@ The list below is the full commercial MVP scope. Delivery should follow the phas
 15. Guardian consent age threshold and legal text.
 16. Curriculum source of truth and content review owner.
 17. Exact Phase 1 launch scope and timeline.
+18. How granular the first launch learning objectives should be.
+19. Minimum question coverage required per learning objective before publishing.
+20. Mastery threshold required to move forward automatically.
+21. Minimum confidence threshold required before treating an objective as mastered.
+22. Whether teacher review queue is included in Phase 1 or starts in Phase 2.
+23. Relative weighting of live quiz answers compared with Library and resource questions.

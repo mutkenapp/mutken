@@ -201,13 +201,17 @@ The MVP backend should be split into clear modules inside one backend applicatio
 | Student Profile | Yes | Student data, parent/guardian data, Student ID, language, grade | PostgreSQL, API module |
 | Consent | Yes | Terms/privacy/guardian consent timestamps and versions | PostgreSQL append-only records |
 | Curriculum Catalog | Yes | Country, education system, grade, subject, semester, unit, lesson | PostgreSQL hierarchical model |
-| Content Repository | Yes | Resource metadata, videos, thumbnails, questions, markers | PostgreSQL + object storage + video provider |
-| Resource Learning Engine | Yes | Watch progress, video markers, question attempts, stars, completion | API module + event writes |
+| Learning Objective Catalog | Yes | Objective definitions, prerequisites, objective coverage, curriculum alignment | PostgreSQL objective tables + admin CMS |
+| Content Repository | Yes | Resource metadata, videos, thumbnails, questions, markers, objective mappings | PostgreSQL + object storage + video provider |
+| Learning Evidence Engine | Yes | Append-only evidence events from resources, Library practice, live quizzes, teacher tasks, and challenges | API module + event writer + idempotency |
+| Mastery Engine | Yes | Objective mastery score, confidence score, weak area summaries, recency/diversity weighting | Rules service + aggregation jobs |
+| Resource Learning Engine | Yes | Watch progress, video markers, question attempts, stars, completion, evidence events | API module + event writes |
 | Points Ledger | Yes | Points events, weekly/lifetime points, idempotency, anti-abuse | PostgreSQL transaction tables |
 | Entitlement Engine | Yes | Free caps, paid subject access, subscription state, locked content | Central policy service in backend |
 | Subscription and Payment | Yes | Packages, monthly billing state, payment references, manual reconciliation | Payment adapter + webhook handler |
-| Study Plan Recommendation | Yes | Today's learning journey, weak area logic, next resource ordering | Rules engine + scheduled jobs |
-| Progress Engine | Yes | Subject progress, mastery, weak areas, completion summaries | Aggregation jobs + query API |
+| Study Plan Recommendation | Yes | Today's learning journey, mastery-driven weak area logic, next resource ordering, locked item reasons | Rules engine + scheduled jobs |
+| Progress Engine | Yes | Subject/unit/lesson progress, objective mastery rollups, weak areas, completion summaries | Aggregation jobs + query API |
+| Teacher Review Queue | MVP foundation / Phase 2 | Flag difficult Study Plan cases for assistant teacher review | Teacher API + review queue tables |
 | Admin Operations | Yes | Manage users, content, curriculum, subscription, payment, support | Admin API + RBAC |
 | Assistant Teacher Chat | Phase 2 | Teacher/student messages, recommendations, rewardable clips | Chat module + realtime gateway |
 | Teacher Rewards | Phase 2 | Capped, audited teacher reward points | RBAC + points ledger |
@@ -385,15 +389,22 @@ Requirements:
 - Manage grades.
 - Manage subjects.
 - Manage semesters, units, lessons.
+- Manage learning objectives under lessons or curriculum nodes.
+- Manage objective prerequisites and required mastery thresholds.
 - Manage resources under lessons.
 - Manage video markers and questions.
+- Map resources, video markers, resource questions, Library questions, live questions, teacher tasks, and challenge questions to learning objectives.
+- Mark one primary objective and optional secondary objectives per question.
+- Show objective coverage per lesson before publishing.
 - Publish/unpublish content.
 - Version curriculum updates.
 - Review and approve content before publication.
+- Block or warn publishing when objective mappings, marker-question links, explanations, difficulty, or review approval are missing.
 
 Technology:
 
 - PostgreSQL versioned curriculum schema.
+- Objective mapping tables with validation constraints.
 - Object storage for thumbnails and attachments.
 - Video provider for video asset lifecycle.
 
@@ -439,6 +450,12 @@ Requirements:
 - Conversion: free-to-paid, payment started/confirmed/failed.
 - Engagement: DAU/WAU, resource completion, questions answered.
 - Learning: accuracy, weak areas, stars, improvements.
+- Weak objectives by grade and subject.
+- Mastery improvement by plan item type.
+- Questions with high wrong-answer rate.
+- Videos watched but failed questions.
+- Live sessions causing mastery improvement.
+- Teacher review outcomes.
 - Monetization: MRR, package distribution, renewal/cancellation.
 - Teacher operations: rewards, chats, live questions.
 
@@ -472,6 +489,11 @@ Requirements:
 - View assigned students or live class groups.
 - See students needing help.
 - See recent weak areas.
+- See students with low-confidence mastery.
+- See students who watched videos but failed questions.
+- See students who failed live exit quizzes.
+- See inactive students.
+- See plans awaiting review.
 - See recommended teacher actions.
 
 Backend dependencies:
@@ -486,11 +508,16 @@ Requirements:
 
 - Student profile summary.
 - Grade, subject, subscription state.
+- Objective mastery score and confidence.
 - Recent resources completed.
 - Recent incorrect answers.
+- Recent evidence by source: resource questions, Library practice, live quizzes, teacher tasks, and challenges.
 - Current weak areas.
+- Low-confidence objectives that need verification.
 - Recent points and streak.
 - Recommended next action.
+- Current Study Plan and teacher review status.
+- Suggested teacher action for repeated weakness or inactivity.
 
 Technology:
 
@@ -561,9 +588,12 @@ It must support:
 
 - Egyptian public education curriculum structure.
 - Semester, unit, lesson hierarchy.
+- Learning objectives and objective prerequisites.
 - Resources linked to lessons.
 - Videos with marker timestamps.
 - Questions linked to exact video timestamps.
+- One primary learning objective per question with optional secondary objectives.
+- Objective coverage review by lesson.
 - Versioning by academic year and subject.
 - Review and publish workflow.
 
@@ -579,6 +609,11 @@ Minimum entities:
 - ResourceQuestion.
 - ResourceQuestionChoice.
 - VideoMarker.
+- LearningObjective.
+- ObjectivePrerequisite.
+- QuestionObjectiveMapping.
+- ResourceObjectiveMapping.
+- LiveQuestionObjectiveMapping.
 - ContentReview.
 - ContentVersion.
 
@@ -600,9 +635,20 @@ Minimum entities:
 4. System extracts video duration and thumbnail.
 5. Content admin adds marker timestamps.
 6. Content admin attaches questions to markers.
-7. Subject matter expert reviews content.
-8. Content admin publishes resource.
-9. Published resources become available to Study Plan and Library based on entitlement.
+7. Content admin maps each resource, marker, and question to learning objectives.
+8. System validates objective coverage, difficulty, explanations, marker-question links, and review status.
+9. Subject matter expert reviews content.
+10. Content admin publishes resource.
+11. Published resources become available to Study Plan and Library based on entitlement.
+
+Publishing should be blocked or warned when:
+
+- A lesson has no learning objectives.
+- A resource has no objective mapping.
+- A question has no primary objective.
+- A marker has no linked question or objective.
+- A required objective has no question coverage.
+- Difficulty or feedback explanations are missing.
 
 ### Technology
 
@@ -624,6 +670,92 @@ The recommendation system decides what the student should study today.
 
 For MVP, this should be rules-based and explainable.
 
+The Study Plan Engine answers:
+
+```text
+What should this student do next, and why?
+```
+
+It must use objective-level mastery and confidence as the main personalization driver.
+
+### Mastery and Learning Evidence Foundation
+
+The Study Plan system depends on a central Mastery Engine.
+
+Mastery exists at four levels:
+
+```text
+Subject mastery
+  -> Unit mastery
+    -> Lesson mastery
+      -> Learning objective mastery
+```
+
+Learning objective mastery is the primary level. Higher levels are rollups.
+
+Each objective mastery record includes:
+
+- Mastery score from 0 to 100.
+- Confidence score from 0 to 1.
+- Status: critical weakness, weak, developing, good, or mastered.
+- Evidence count.
+- Last practiced timestamp.
+- Last updated timestamp.
+
+Mastery must be updated from append-only learning events. The client must not directly send a final mastery score.
+
+Learning evidence sources include:
+
+| Source | Suggested Weight |
+| --- | ---: |
+| Video watch progress | 0.2 |
+| Resource marker question | 0.8 |
+| Library practice question | 1.0 |
+| Unit quiz | 1.2 |
+| Live warm-up question | 0.4 |
+| Live concept check | 0.8 |
+| Live exit quiz | 1.1 |
+| Teacher-validated task | 1.3 |
+| Challenge question | 0.7-1.0 |
+
+Attempt quality changes the evidence score:
+
+| Result | Evidence Score Range |
+| --- | ---: |
+| Correct first attempt, no hint | 85-100 |
+| Correct second attempt | 65-80 |
+| Correct after hint | 50-65 |
+| Incorrect first attempt | 25-40 |
+| Repeated incorrect | 10-30 |
+| Skipped question | 0-20 |
+
+Difficulty adjustment:
+
+| Difficulty | Adjustment |
+| --- | ---: |
+| Easy | 0.8x |
+| Medium | 1.0x |
+| Hard | 1.2x |
+| Advanced / Challenge | 1.3x |
+
+MVP calculation approach:
+
+1. Store every learning event.
+2. Convert each event into an evidence score.
+3. Apply source, difficulty, attempt, and hint weighting.
+4. Recalculate objective mastery from recent weighted evidence with recency weighting.
+5. Calculate confidence from evidence quantity and source diversity.
+6. Update weak area summaries.
+
+Important rules:
+
+- One correct answer cannot create high-confidence mastery.
+- One wrong answer cannot destroy mastery.
+- Watching a full video is not enough to mark mastery as complete.
+- Repeated mistakes across different sources should strongly reduce mastery.
+- Correct recovery after mistakes should improve mastery and confidence.
+- Light decay or spaced review triggers should apply when an objective has not been practiced for a long time.
+
 ### Recommendation Inputs
 
 Required inputs:
@@ -633,14 +765,24 @@ Required inputs:
 - Active subject.
 - Subscription entitlement.
 - Curriculum catalog version.
+- Current unit and lesson.
+- Objective mastery.
+- Objective confidence.
 - Resources completed.
 - Resource stars earned.
 - Watch percentage.
 - Question attempts and correctness.
+- Library practice accuracy.
 - Weak areas.
 - Recent live session participation.
+- Upcoming live sessions.
+- Recently completed live sessions.
 - Recent assistant recommendations.
+- Teacher-pinned tasks.
+- Teacher recommendations.
 - Daily free caps already consumed.
+- Time since last practice.
+- Student workload.
 
 ### Recommendation Outputs
 
@@ -648,10 +790,15 @@ The system should produce:
 
 - Today's ordered study plan.
 - Recommended resource IDs.
+- Item type.
+- Learning objective ID when applicable.
 - Reason for each recommendation.
+- Estimated minutes.
 - Lock/unlock state.
 - Available points.
 - Upgrade prompt reason when locked by entitlement.
+- Completion summary after the plan is finished.
+- Next plan preview when available.
 
 ### MVP Recommendation Rules
 
@@ -663,8 +810,126 @@ The system should produce:
 | Student has 5/5 stars | Move to next resource or next lesson |
 | Student repeatedly misses marker questions | Mark skill as weak and recommend remedial content |
 | Student completed today's plan | Recommend challenge or next live session |
+| Mastery is below 60 or confidence is low | Add remediation, practice, or verification |
+| Same objective failed across video, Library, and live | Request teacher review |
+| Weak prerequisite exists | Review prerequisite before next lesson |
+| Upcoming live session exists | Add live preparation when relevant |
+| Recent live session has missed questions | Add live recap tasks |
+| Teacher pins task | Rank pinned task first |
 | Free user reached cap | Return locked item with upgrade reason |
 | Paid user in subscribed subject | Return unlimited next resources |
+
+### Study Plan Item Types
+
+| Item Type | Example |
+| --- | --- |
+| Continue resource | Continue unfinished video |
+| Resource clip | Watch short remedial explanation |
+| Full video lesson | Watch next or remedial lesson |
+| Marker retry | Retry missed embedded questions |
+| Library practice | Practice 5-10 targeted questions |
+| Live preparation | Prepare before upcoming live session |
+| Live recap | Review missed live quiz questions |
+| Teacher task | Complete assistant teacher recommendation |
+| Diagnostic mini-quiz | Verify mastery |
+| Spaced review | Review older objective |
+| Challenge | Advanced question set |
+| Next lesson | Move forward in curriculum |
+
+### Generation Process
+
+1. Read student profile, curriculum position, subscription entitlement, active plan, recent learning events, objective mastery, weak areas, teacher recommendations, and upcoming live sessions.
+2. Recalculate mastery before planning.
+3. Detect weak areas when mastery is below 60, confidence is low, repeated incorrect answers exist, prerequisite mastery is weak, or multiple evidence sources show the same weakness.
+4. Generate candidate activities: unfinished resource, missed marker retry, targeted Library practice, remedial clip, prerequisite review, live prep, live recap, teacher-pinned task, next curriculum lesson, and challenge.
+5. Rank candidates.
+6. Apply constraints.
+7. Return a plan with reasons.
+
+Suggested ranking order:
+
+1. Teacher-pinned urgent task.
+2. Critical weak prerequisite.
+3. Recently failed objective across multiple sources.
+4. Incomplete current resource.
+5. Live recap from recent session.
+6. Preparation for upcoming live session.
+7. Targeted Library practice.
+8. Next lesson when mastery is sufficient.
+9. Spaced review.
+10. Challenge or enrichment.
+
+Recommended constraints:
+
+- Maximum 3-5 items in a daily plan.
+- Maximum 1 new lesson when weak prerequisites exist.
+- At least 1 practice task if mastery is below 70.
+- Do not repeat the same video too many times.
+- Respect free daily caps.
+- Respect paid subject entitlement.
+- Respect teacher-pinned tasks.
+- Avoid constantly changing the active plan during a session.
+
+### Plan Completion and Regeneration
+
+When the student completes a full Study Plan:
+
+1. Store a plan completion learning event.
+2. Recalculate affected objective mastery.
+3. Update progress and weak area summaries.
+4. Generate a completion summary.
+5. Generate a next plan draft or next plan preview.
+6. Request teacher review only when review criteria match.
+
+Next decision rules:
+
+| Result After Plan Completion | System Action |
+| --- | --- |
+| Target objective mastered | Move to next objective or lesson |
+| Improved but not mastered | Add short practice set |
+| Failed repeatedly | Add remedial video and flag teacher review |
+| Completed easily | Add challenge or next lesson |
+| Low confidence | Add mini verification quiz |
+| Weak prerequisite | Review prerequisite before next lesson |
+| Missed live quiz questions | Generate live recap plan |
+| Teacher task completed | Update teacher task status and mastery |
+| Free cap reached | Lock next item with upgrade reason |
+
+### Study Plan Stability
+
+The plan should be adaptive but not chaotic.
+
+- During an active plan, keep the plan stable and update mastery in the background.
+- The system may append a small review item when the student misses questions.
+- Major regeneration should happen after full plan completion, after a live session, during daily refresh, or after a teacher-pinned recommendation.
+- Daily refresh should consider the previous day's activity, mastery changes, missed tasks, teacher recommendations, upcoming live sessions, spaced review, and subscription access.
+
+### Teacher Review Queue Rules
+
+The assistant teacher should not review every Study Plan.
+
+Teacher review is required when:
+
+- The same objective is failed across video, Library, and live evidence.
+- Mastery drops sharply.
+- The student completed videos but failed embedded questions.
+- The student is inactive for a configured number of days.
+- The student asks for help.
+- Parent/support escalation exists.
+- Teacher manually pins or modifies a task.
+
+Teacher review statuses:
+
+| Status | Meaning |
+| --- | --- |
+| `auto_generated` | Generated by system |
+| `teacher_review_requested` | Needs teacher review |
+| `teacher_approved` | Teacher approved |
+| `teacher_modified` | Teacher changed items |
+| `student_active` | Student is working on plan |
+| `student_completed` | Student completed plan |
+| `expired` | Plan expired |
+| `replaced` | Newer plan replaced it |
 
 ### Recommendation Architecture
 
@@ -708,6 +973,11 @@ The resource engine manages video learning, markers, questions, stars, points, a
 - Correct answers show confirmation and reasoning.
 - Points depend on attempt quality.
 - Points are idempotent and cannot be duplicated by replaying.
+- Each marker question must have objective mapping.
+- Resource watch progress, marker answers, hint usage, attempts, and completion must create learning events.
+- Watch progress alone must not mark objective mastery as complete.
+- 5/5 stars completes the resource and is a strong progress signal, but objective mastery still depends on evidence quality and diversity.
+- Rewatching a segment should be captured as an effort/difficulty signal when useful.
 
 ### Required APIs
 
@@ -719,12 +989,14 @@ The resource engine manages video learning, markers, questions, stars, points, a
 | `GET /resources/:id/progress` | Get stars, attempts, completion, points earned |
 | `POST /resources/:id/complete` | Server-side completion validation when 5/5 stars |
 
+Every write endpoint should internally create a learning event when it provides evidence.
+
 ### Technology
 
 - Backend: NestJS resource module.
 - Database: PostgreSQL resource progress and question attempt tables.
 - Video: HLS streaming provider.
-- Events: points events and learning analytics.
+- Events: points events, learning events, and learning analytics.
 - Mobile: native video player with marker overlay.
 
 ## 12. Points, Excellence Board, and Challenges Engine
@@ -742,6 +1014,10 @@ The points engine is a financial-like ledger for learning rewards. It must be au
 - Weekly, lifetime, and ranking eligibility must be separate.
 - Teacher rewards require RBAC permission and audit.
 - Ranking caps must be applied separately from point earning.
+- Points and mastery are connected but not the same.
+- High points do not automatically mean high mastery.
+- High mastery must come from correct learning evidence.
+- A student can earn engagement points for watching a video while still receiving a remediation Study Plan if marker questions are wrong.
 
 ### Data Implementation
 
@@ -800,7 +1076,15 @@ canAnswerQuestion(studentId, subjectId)
 canUseAssistantChat(studentId, subjectId)
 canJoinLiveSession(studentId, subjectId)
 canViewProgressDetail(studentId, subjectId)
+canEarnRankingPoints(studentId, sourceType)
 ```
+
+The Study Plan can return locked items, but each locked item must include:
+
+- Lock state.
+- Lock reason.
+- Upgrade prompt.
+- Free alternative when available.
 
 ### Technology
 
@@ -826,6 +1110,9 @@ Live sessions are Phase 3 in the PRD. However, the backend should reserve the da
 - Live quiz/question events.
 - Live answer submissions.
 - Live participation points.
+- Live question objective mappings.
+- Live learning summary after session close.
+- Live recap Study Plan suggestions.
 
 ### Recommended Technology
 
@@ -835,6 +1122,8 @@ Live sessions are Phase 3 in the PRD. However, the backend should reserve the da
 | Shared area updates | WebSocket / Socket.IO |
 | Attendance events | Backend session events |
 | Live question state | PostgreSQL + Redis pub/sub |
+| Live learning evidence | Learning Evidence Engine |
+| Live mastery update | Mastery Engine |
 | Live points | Points ledger |
 
 ### Live Shared Area States
@@ -845,6 +1134,26 @@ Live sessions are Phase 3 in the PRD. However, the backend should reserve the da
 - Feedback/explanation.
 
 The assistant teacher controls this state. Students should not be able to change shared content.
+
+### Live Quiz Data Flow
+
+1. Teacher publishes a live question.
+2. Live module broadcasts the question to active students.
+3. Student submits an answer.
+4. Live module validates the submission window and stores the answer.
+5. Learning Evidence Engine creates a learning event.
+6. Mastery Engine updates the linked objective.
+7. Study Plan Engine marks possible live recap need.
+
+After session completion, the system should calculate:
+
+- Attendance.
+- Live quiz accuracy.
+- Weak objectives.
+- Strong objectives.
+- Recommended next action.
+- Eligible participation points.
+- Teacher review flag when repeated weakness appears.
 
 ## 15. Assistant Teacher Chat System
 
@@ -858,7 +1167,11 @@ Assistant chat is Phase 2 in the PRD. Technical foundations should be prepared i
 - Assistant-to-student messages.
 - Resource recommendation card.
 - Short clip recommendation card.
+- Targeted practice recommendation card.
+- Retry missed questions card.
+- Live recap task card.
 - Rewardable completion task.
+- Objective-linked teacher task.
 - Chat history.
 - Teacher assignment.
 - Audit and safety review.
@@ -870,6 +1183,8 @@ Assistant chat is Phase 2 in the PRD. Technical foundations should be prepared i
 - Push notifications for offline student.
 - RBAC for assistant teacher access.
 - Points ledger integration for reward completion.
+- Learning Evidence Engine integration for completed teacher tasks.
+- Study Plan Engine integration for teacher-pinned or teacher-recommended items.
 
 ### AI vs Human Operation
 
@@ -895,11 +1210,18 @@ If AI is added later:
 Required outputs:
 
 - Subject progress percentage.
+- Unit progress percentage.
+- Lesson progress percentage.
+- Learning objective mastery score.
+- Mastery confidence score.
+- Mastery status: critical weakness, weak, developing, good, or mastered.
 - Lesson completion.
 - Resource stars.
 - Watch progress.
 - Accuracy.
 - Weak areas.
+- Weak area evidence summary.
+- Recent mastery improvements and drops.
 - Weekly points.
 - Lifetime points.
 - Recommended next action.
@@ -909,8 +1231,11 @@ Required outputs:
 MVP student reports:
 
 - Current subject progress.
+- Objective mastery and confidence.
 - Recent achievements.
 - Weak areas.
+- Improved objectives.
+- Objectives needing verification because confidence is low.
 - Next recommended activity.
 
 Later parent reports:
@@ -1078,6 +1403,8 @@ Reason:
    - curriculum_nodes.
    - subjects.
    - curriculum_versions.
+   - learning_objectives.
+   - objective_prerequisites.
 
 4. Content:
    - resources.
@@ -1085,29 +1412,42 @@ Reason:
    - video_markers.
    - resource_questions.
    - resource_question_choices.
+   - question_objective_mappings.
+   - resource_objective_mappings.
+   - live_question_objective_mappings.
 
 5. Learning:
    - resource_progress.
    - question_attempts.
+   - learning_events.
+   - watch_events.
+   - live_answer_events.
+   - study_plan_runs.
    - study_plan_items.
-   - weak_area_summaries.
+   - study_plan_item_events.
 
-6. Commercial:
+6. Mastery:
+   - student_objective_mastery.
+   - weak_area_summaries.
+   - mastery_snapshots.
+
+7. Commercial:
    - subscriptions.
    - entitlements.
    - payment_references.
    - payment_events.
    - usage_counters.
 
-7. Points:
+8. Points:
    - points_events.
    - points_rollups.
    - ranking_scores.
    - achievements.
 
-8. Teacher/chat/live:
+9. Teacher/chat/live:
    - teachers.
    - teacher_assignments.
+   - teacher_plan_reviews.
    - chat_threads.
    - chat_messages.
    - teacher_rewards.
@@ -1115,11 +1455,124 @@ Reason:
    - live_shared_content.
    - live_question_answers.
 
-9. Operations:
+10. Operations:
    - support_tickets.
    - audit_logs.
    - notifications.
    - analytics_events.
+
+### Detailed Schema Additions for Mastery and Study Plan
+
+`learning_objectives`:
+
+- id.
+- subject_id.
+- curriculum_node_id.
+- title_ar.
+- title_en.
+- description_ar.
+- description_en.
+- difficulty_level.
+- academic_year.
+- status.
+
+`objective_prerequisites`:
+
+- id.
+- objective_id.
+- prerequisite_objective_id.
+- required_mastery_score.
+
+`question_objective_mappings`, `resource_objective_mappings`, and `live_question_objective_mappings`:
+
+- id.
+- source entity ID.
+- learning_objective_id.
+- is_primary_objective where applicable.
+- weight.
+
+`learning_events`:
+
+- id.
+- student_id.
+- subject_id.
+- learning_objective_id.
+- source_type.
+- source_id.
+- event_type.
+- is_correct.
+- score.
+- difficulty.
+- attempt_number.
+- hint_used.
+- time_spent_seconds.
+- evidence_weight.
+- idempotency_key.
+- created_at.
+
+`student_objective_mastery`:
+
+- id.
+- student_id.
+- learning_objective_id.
+- mastery_score.
+- confidence_score.
+- status.
+- evidence_count.
+- last_event_id.
+- last_practiced_at.
+- last_updated_at.
+
+`weak_area_summaries`:
+
+- id.
+- student_id.
+- subject_id.
+- learning_objective_id.
+- severity.
+- reason.
+- evidence_summary.
+- first_detected_at.
+- last_detected_at.
+- status.
+
+`study_plan_runs`:
+
+- id.
+- student_id.
+- subject_id.
+- generated_at.
+- trigger_type.
+- status.
+- generator_version.
+- teacher_review_status.
+- completion_summary.
+
+`study_plan_items`:
+
+- id.
+- plan_run_id.
+- item_type.
+- resource_id.
+- question_set_id.
+- live_session_id.
+- teacher_task_id.
+- learning_objective_id.
+- priority.
+- reason.
+- estimated_minutes.
+- lock_state.
+- status.
+- completed_at.
+
+`teacher_plan_reviews`:
+
+- id.
+- study_plan_run_id.
+- student_id.
+- teacher_id.
+- review_status.
+- teacher_notes.
 
 ### Database Rules
 
@@ -1130,7 +1583,11 @@ Reason:
   - Email where applicable.
   - Phone where applicable.
   - Points idempotency key.
+  - Learning event idempotency key.
   - Payment provider transaction reference.
+- Learning events should be append-only.
+- Objective mappings should enforce one primary objective for each scored question.
+- Content publishing should validate objective coverage before resources become available.
 - Use soft delete only where historical audit is required.
 - Preserve learning history across curriculum version updates.
 
@@ -1156,6 +1613,8 @@ Recommended:
 | Library | resource lists, filters, lock states |
 | Resource | resource detail, watch progress, answer question |
 | Study Plan | today's plan, item status, recommendation reason |
+| Mastery | subject mastery, objective mastery, weak areas, recent mastery changes |
+| Learning Evidence | internal event creation from resource, Library, live, teacher task, challenge actions |
 | Points | summary, event history, unlock status |
 | Progress | subject progress, weak areas, next action |
 | Subscription | packages, selected subjects, checkout, status |
@@ -1165,6 +1624,35 @@ Recommended:
 | Live | sessions, join token, shared content, answers |
 | Notifications | device tokens, preferences |
 | Analytics | server-side event capture |
+
+### Study Plan and Mastery API Details
+
+| API | Purpose |
+| --- | --- |
+| `GET /api/v1/study-plan/today` | Load or generate today's plan |
+| `POST /api/v1/study-plan/:id/items/:itemId/start` | Start a plan item |
+| `POST /api/v1/study-plan/:id/items/:itemId/complete` | Complete a plan item |
+| `POST /api/v1/study-plan/:id/complete` | Complete full plan and trigger summary/regeneration |
+| `GET /api/v1/study-plan/:id/summary` | Get completion summary |
+| `GET /api/v1/study-plan/next-preview` | Preview next recommendation |
+| `GET /api/v1/mastery/subjects/:subjectId` | Get subject-level mastery rollup |
+| `GET /api/v1/mastery/objectives/:objectiveId` | Get objective mastery and confidence |
+| `GET /api/v1/mastery/weak-areas` | Get weak areas |
+| `GET /api/v1/mastery/recent-changes` | Show mastery improvements/drops |
+
+Most learning evidence should be written by internal backend services, not trusted directly from the client. Resource, Library, live, teacher task, and challenge endpoints should create learning events internally.
+
+Teacher review APIs:
+
+| API | Purpose |
+| --- | --- |
+| `GET /api/v1/teacher/review-queue` | List students needing review |
+| `GET /api/v1/teacher/students/:studentId/learning-context` | View mastery, weak areas, and recent evidence |
+| `POST /api/v1/teacher/study-plans/:planId/approve` | Approve plan |
+| `POST /api/v1/teacher/study-plans/:planId/modify` | Modify plan |
+| `POST /api/v1/teacher/study-plans/:planId/pin-item` | Pin item |
+| `POST /api/v1/teacher/students/:studentId/recommend-resource` | Send recommendation |
+| `POST /api/v1/teacher/students/:studentId/assign-practice` | Assign practice |
 
 ### API Security
 
@@ -1184,7 +1672,16 @@ Required:
 - Unit tests for points idempotency.
 - Unit tests for subscription state transitions.
 - Unit tests for recommendation rules.
+- Unit tests for objective mapping validation.
+- Unit tests for mastery score update.
+- Unit tests for mastery confidence thresholds.
+- Unit tests that one answer cannot create high-confidence mastery.
+- Unit tests that watch progress alone does not complete mastery.
 - Integration tests for resource question attempts.
+- Integration tests that every answer creates a learning event.
+- Integration tests that repeated wrong answers update weak areas.
+- Integration tests that teacher-pinned Study Plan items rank first.
+- Integration tests that free caps lock Study Plan items correctly.
 - Integration tests for payment webhook handling.
 - Integration tests for OTP verification limits.
 
@@ -1195,8 +1692,13 @@ Required:
 - Auth flow smoke test.
 - OTP flow smoke test.
 - Study plan loading.
+- Study Plan reason display.
+- Locked Study Plan item upgrade reason.
+- Completion summary after plan completion.
 - Resource playback progress event.
 - Marker question answer flow.
+- Library practice completion updates the next plan.
+- Live quiz answer submits and syncs when Phase 3 is active.
 - Arabic RTL visual checks.
 - Subscription lock/unlock states.
 
@@ -1206,8 +1708,12 @@ Required:
 
 - RBAC permission tests.
 - Content publish workflow.
+- Objective mapping coverage validation.
 - Payment reconciliation audit.
 - Teacher reward cap.
+- Teacher review queue visibility.
+- Teacher plan approval and modification.
+- Teacher-pinned item audit.
 - Live shared area state updates.
 
 ### Release Quality Gates
@@ -1281,6 +1787,9 @@ DevOps:
 Backend:
 
 - Curriculum catalog.
+- Learning objective catalog.
+- Objective prerequisite model.
+- Objective mapping model.
 - Subject, semester, unit, lesson APIs.
 - Resource metadata APIs.
 - Media asset model.
@@ -1289,8 +1798,12 @@ Backend:
 Admin:
 
 - Curriculum management screens.
+- Learning objective management.
+- Objective prerequisite management.
 - Resource creation/editing.
 - Video marker and question editor baseline.
+- Resource/question/objective mapping workflow.
+- Objective coverage validation before publishing.
 
 Mobile:
 
@@ -1311,6 +1824,8 @@ Backend:
 - Marker question answer API.
 - Star calculation.
 - Resource completion validation.
+- Learning event creation from watch progress and marker answers.
+- Objective mastery update from resource marker answers.
 - Points event creation for resource actions.
 
 Mobile:
@@ -1356,10 +1871,15 @@ Admin:
 
 Backend:
 
+- Learning Evidence Engine.
+- Mastery Engine.
+- Objective confidence calculation.
+- Weak area summaries.
 - Study plan recommendation rules.
+- Study Plan candidate generation and ranking.
+- Study Plan completion summary and next-plan preview.
 - Daily plan API.
 - Progress summaries.
-- Weak area summaries.
 - Points rollups.
 - Excellence board activation state.
 
@@ -1373,6 +1893,8 @@ Mobile:
 Admin:
 
 - Student detail page with learning context.
+- Objective mastery and evidence context.
+- Teacher review queue foundation.
 - Points event history.
 
 #### Weeks 11-12: Hardening, UAT, and Launch Preparation
@@ -1507,4 +2029,3 @@ These references were checked for current platform implications:
 - Apple StoreKit External Purchase Link entitlement: https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.storekit.external-purchase-link
 - LiveKit SFU documentation: https://docs.livekit.io/reference/internals/livekit-sfu/
 - LiveKit overview: https://docs.livekit.io/intro/about/
-
