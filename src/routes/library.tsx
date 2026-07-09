@@ -194,6 +194,7 @@ function LibraryScreen() {
   const [grade, setGrade] = useState("Grade 6");
   const [subjectId, setSubjectId] = useState<string>("all");
   const [selected, setSelected] = useState<Subject | null>(null);
+  const [pointsOpen, setPointsOpen] = useState(false);
 
   const visibleSubjects =
     subjectId === "all" ? SUBJECTS : SUBJECTS.filter((s) => s.id === subjectId);
@@ -205,8 +206,20 @@ function LibraryScreen() {
   return (
     <MobileShell>
       <header className="px-5 pt-14 pb-4">
-        <h1 className="text-2xl font-bold">{t("library.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("library.subtitle")}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">{t("library.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("library.subtitle")}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPointsOpen(true)}
+            className="h-10 w-10 rounded-2xl bg-mint/20 text-navy flex items-center justify-center shadow-soft border border-mint/30 flex-shrink-0"
+            aria-label={lang === "ar" ? "نقاط الموارد" : "Resource points"}
+          >
+            <Coins className="h-5 w-5" />
+          </button>
+        </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <label className="block">
@@ -246,32 +259,6 @@ function LibraryScreen() {
       </header>
 
       <div className="px-5 space-y-4">
-        <div className="rounded-3xl bg-card border border-border p-4 shadow-soft">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {lang === "ar" ? "نقاط الموارد" : "Resource points"}
-              </p>
-              <p className="font-semibold mt-0.5">
-                {lang === "ar"
-                  ? "شاهد وتدرّب لتفتح لوحة التفوق"
-                  : "Watch and practice to unlock the leaderboard"}
-              </p>
-            </div>
-            <Coins className="h-5 w-5 text-navy" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {resourcePointRules.map((rule) => (
-              <div key={rule.label.en} className="rounded-2xl bg-muted/60 p-3">
-                <p className="text-[11px] text-muted-foreground leading-tight">
-                  {rule.label[lang]}
-                </p>
-                <p className="mt-1 text-sm font-bold text-navy">{rule.points}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className="grid grid-cols-2 gap-3">
           {visibleSubjects.map((s) => {
             const c = countLessons(s);
@@ -299,6 +286,8 @@ function LibraryScreen() {
           <MockExamBuilderCard lang={lang} />
         </div>
       </div>
+
+      <ResourcePointsDialog open={pointsOpen} onClose={() => setPointsOpen(false)} lang={lang} />
     </MobileShell>
   );
 }
@@ -438,6 +427,64 @@ function SubjectLessons({
         </div>
       </div>
     </MobileShell>
+  );
+}
+
+function ResourcePointsDialog({
+  open,
+  onClose,
+  lang,
+}: {
+  open: boolean;
+  onClose: () => void;
+  lang: "ar" | "en";
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-6 pt-20">
+      <button
+        type="button"
+        className="absolute inset-0 bg-navy/35 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-label={lang === "ar" ? "إغلاق" : "Close"}
+      />
+      <div className="relative w-full max-w-[408px] rounded-3xl bg-card border border-border p-4 shadow-glow overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-1 bg-mint-gradient" />
+        <div className="flex items-start justify-between gap-3 pt-1">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              {lang === "ar" ? "نقاط الموارد" : "Resource points"}
+            </p>
+            <h2 className="mt-0.5 text-lg font-extrabold text-navy">
+              {lang === "ar"
+                ? "شاهد وتدرّب لتفتح لوحة التفوق"
+                : "Watch and practice to unlock the leaderboard"}
+            </h2>
+          </div>
+          <div className="h-10 w-10 rounded-2xl bg-mint/20 text-navy flex items-center justify-center shrink-0">
+            <Coins className="h-5 w-5" />
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {resourcePointRules.map((rule) => (
+            <div key={rule.label.en} className="rounded-2xl bg-muted/60 p-3">
+              <p className="text-[11px] text-muted-foreground leading-tight">{rule.label[lang]}</p>
+              <p className="mt-1 text-sm font-bold text-navy">{rule.points}</p>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-3 w-full rounded-full bg-hero text-primary-foreground py-2.5 text-sm font-semibold shadow-glow"
+        >
+          {lang === "ar" ? "تم" : "Done"}
+        </button>
+      </div>
+    </div>
   );
 }
 
