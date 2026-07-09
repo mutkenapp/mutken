@@ -13,6 +13,7 @@ import { Route as SubjectRouteImport } from './routes/subject'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as MockExamRouteImport } from './routes/mock-exam'
 import { Route as MeetingRouteImport } from './routes/meeting'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as LibraryRouteImport } from './routes/library'
@@ -20,6 +21,7 @@ import { Route as ChatRouteImport } from './routes/chat'
 import { Route as ChallengesRouteImport } from './routes/challenges'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VideoIdRouteImport } from './routes/video.$id'
+import { Route as MockExamTakeRouteImport } from './routes/mock-exam.take'
 
 const SubjectRoute = SubjectRouteImport.update({
   id: '/subject',
@@ -39,6 +41,11 @@ const ProgressRoute = ProgressRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockExamRoute = MockExamRouteImport.update({
+  id: '/mock-exam',
+  path: '/mock-exam',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeetingRoute = MeetingRouteImport.update({
@@ -76,6 +83,11 @@ const VideoIdRoute = VideoIdRouteImport.update({
   path: '/video/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MockExamTakeRoute = MockExamTakeRouteImport.update({
+  id: '/take',
+  path: '/take',
+  getParentRoute: () => MockExamRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -84,10 +96,12 @@ export interface FileRoutesByFullPath {
   '/library': typeof LibraryRoute
   '/live': typeof LiveRoute
   '/meeting': typeof MeetingRoute
+  '/mock-exam': typeof MockExamRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/subject': typeof SubjectRoute
+  '/mock-exam/take': typeof MockExamTakeRoute
   '/video/$id': typeof VideoIdRoute
 }
 export interface FileRoutesByTo {
@@ -97,10 +111,12 @@ export interface FileRoutesByTo {
   '/library': typeof LibraryRoute
   '/live': typeof LiveRoute
   '/meeting': typeof MeetingRoute
+  '/mock-exam': typeof MockExamRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/subject': typeof SubjectRoute
+  '/mock-exam/take': typeof MockExamTakeRoute
   '/video/$id': typeof VideoIdRoute
 }
 export interface FileRoutesById {
@@ -111,10 +127,12 @@ export interface FileRoutesById {
   '/library': typeof LibraryRoute
   '/live': typeof LiveRoute
   '/meeting': typeof MeetingRoute
+  '/mock-exam': typeof MockExamRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/subject': typeof SubjectRoute
+  '/mock-exam/take': typeof MockExamTakeRoute
   '/video/$id': typeof VideoIdRoute
 }
 export interface FileRouteTypes {
@@ -126,10 +144,12 @@ export interface FileRouteTypes {
     | '/library'
     | '/live'
     | '/meeting'
+    | '/mock-exam'
     | '/profile'
     | '/progress'
     | '/sitemap.xml'
     | '/subject'
+    | '/mock-exam/take'
     | '/video/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -139,10 +159,12 @@ export interface FileRouteTypes {
     | '/library'
     | '/live'
     | '/meeting'
+    | '/mock-exam'
     | '/profile'
     | '/progress'
     | '/sitemap.xml'
     | '/subject'
+    | '/mock-exam/take'
     | '/video/$id'
   id:
     | '__root__'
@@ -152,10 +174,12 @@ export interface FileRouteTypes {
     | '/library'
     | '/live'
     | '/meeting'
+    | '/mock-exam'
     | '/profile'
     | '/progress'
     | '/sitemap.xml'
     | '/subject'
+    | '/mock-exam/take'
     | '/video/$id'
   fileRoutesById: FileRoutesById
 }
@@ -166,6 +190,7 @@ export interface RootRouteChildren {
   LibraryRoute: typeof LibraryRoute
   LiveRoute: typeof LiveRoute
   MeetingRoute: typeof MeetingRoute
+  MockExamRoute: typeof MockExamRouteWithChildren
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -201,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mock-exam': {
+      id: '/mock-exam'
+      path: '/mock-exam'
+      fullPath: '/mock-exam'
+      preLoaderRoute: typeof MockExamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/meeting': {
@@ -252,8 +284,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VideoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mock-exam/take': {
+      id: '/mock-exam/take'
+      path: '/take'
+      fullPath: '/mock-exam/take'
+      preLoaderRoute: typeof MockExamTakeRouteImport
+      parentRoute: typeof MockExamRoute
+    }
   }
 }
+
+interface MockExamRouteChildren {
+  MockExamTakeRoute: typeof MockExamTakeRoute
+}
+
+const MockExamRouteChildren: MockExamRouteChildren = {
+  MockExamTakeRoute: MockExamTakeRoute,
+}
+
+const MockExamRouteWithChildren = MockExamRoute._addFileChildren(
+  MockExamRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -262,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   LibraryRoute: LibraryRoute,
   LiveRoute: LiveRoute,
   MeetingRoute: MeetingRoute,
+  MockExamRoute: MockExamRouteWithChildren,
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

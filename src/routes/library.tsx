@@ -17,10 +17,6 @@ import {
   Lock,
   Coins,
   FileCheck2,
-  TimerReset,
-  Gauge,
-  SlidersHorizontal,
-  BookMarked,
   type LucideIcon,
 } from "lucide-react";
 import { resourcePointRules } from "@/lib/points";
@@ -250,8 +246,6 @@ function LibraryScreen() {
       </header>
 
       <div className="px-5 space-y-4">
-        <MockExamBuilderCard lang={lang} />
-
         <div className="rounded-3xl bg-card border border-border p-4 shadow-soft">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
@@ -299,6 +293,10 @@ function LibraryScreen() {
               </button>
             );
           })}
+        </div>
+
+        <div className="border-t border-border pt-4">
+          <MockExamBuilderCard lang={lang} />
         </div>
       </div>
     </MobileShell>
@@ -396,30 +394,6 @@ function SubjectLessons({
       </header>
 
       <div className="px-5 py-4 space-y-6">
-        <div className="rounded-2xl bg-card border border-border p-4 shadow-soft overflow-hidden relative">
-          <div className="absolute inset-x-0 top-0 h-1 bg-mint-gradient" />
-          <div className="flex items-start gap-3 pt-1">
-            <div className="h-10 w-10 rounded-2xl bg-warn/20 text-navy flex items-center justify-center flex-shrink-0">
-              <FileCheck2 className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                {lang === "ar" ? "اختبار على هذا النطاق" : "Exam for this scope"}
-              </p>
-              <h3 className="text-sm font-extrabold text-navy leading-tight">
-                {lang === "ar"
-                  ? "أنشئ اختبارًا من الوحدات والدروس المحددة"
-                  : "Create an exam from selected units and lessons"}
-              </h3>
-              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-                {lang === "ar"
-                  ? "النتيجة ستحدث الإتقان وتربط كل خطأ بمورد علاجي محفوظ."
-                  : "The result updates mastery and links each mistake to saved remediation."}
-              </p>
-            </div>
-          </div>
-        </div>
-
         {visibleSemesters.map((s) => (
           <section key={s.name}>
             <h2 className="text-lg font-bold px-1 mb-3">{s.name}</h2>
@@ -458,6 +432,10 @@ function SubjectLessons({
         {!hasAny && (
           <p className="text-center text-sm text-muted-foreground py-8">No lessons found.</p>
         )}
+
+        <div className="border-t border-border pt-4">
+          <MockExamBuilderCard lang={lang} />
+        </div>
       </div>
     </MobileShell>
   );
@@ -470,15 +448,15 @@ function MockExamBuilderCard({ lang }: { lang: "ar" | "en" }) {
       <div className="flex items-start justify-between gap-3 pt-1">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            {lang === "ar" ? "منشئ الاختبار التجريبي" : "Mock exam builder"}
+            {lang === "ar" ? "اختبار ذاتي" : "Self test"}
           </p>
           <h2 className="mt-0.5 text-lg font-extrabold text-navy">
-            {lang === "ar" ? "اختبر جاهزيتك للامتحان النهائي" : "Build a final-exam readiness test"}
+            {lang === "ar" ? "اختبر جاهزيتك للامتحان النهائي" : "Check your final-exam readiness"}
           </h2>
           <p className="mt-1 text-xs leading-snug text-muted-foreground">
             {lang === "ar"
-              ? "اختر عدد الأسئلة، الوقت، الصعوبة، والوحدات أو الدروس. النتيجة تحدث الإتقان وخطة التعلم."
-              : "Choose questions, timing, difficulty, and chapters or lessons. Results update mastery and the study plan."}
+              ? "أنشئ اختبارًا حسب الدروس والصعوبة والوقت، ثم استخدم النتيجة لتحديث الإتقان وخطة التعلم."
+              : "Create a test by lessons, difficulty, and timing, then use the result to update mastery and the study plan."}
           </p>
         </div>
         <div className="h-12 w-12 rounded-2xl bg-warn/20 text-navy flex items-center justify-center flex-shrink-0">
@@ -486,63 +464,12 @@ function MockExamBuilderCard({ lang }: { lang: "ar" | "en" }) {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <ExamOption
-          icon={FileCheck2}
-          label={lang === "ar" ? "عدد الأسئلة" : "Questions"}
-          value={lang === "ar" ? "٢٥ سؤال" : "25 questions"}
-        />
-        <ExamOption
-          icon={TimerReset}
-          label={lang === "ar" ? "الوقت" : "Timing"}
-          value={lang === "ar" ? "بوقت أو بدون" : "Timed or untimed"}
-        />
-        <ExamOption
-          icon={Gauge}
-          label={lang === "ar" ? "الصعوبة" : "Difficulty"}
-          value={lang === "ar" ? "سهل / متوسط / صعب" : "Easy / Medium / Hard"}
-        />
-        <ExamOption
-          icon={SlidersHorizontal}
-          label={lang === "ar" ? "النطاق" : "Scope"}
-          value={lang === "ar" ? "فصول ودروس محددة" : "Chapters and lessons"}
-        />
-      </div>
-
-      <div className="mt-3 rounded-2xl bg-blue/5 border border-blue/10 p-3 flex items-start gap-3">
-        <BookMarked className="h-4 w-4 text-navy mt-0.5 flex-shrink-0" />
-        <p className="text-[11px] leading-snug text-muted-foreground">
-          {lang === "ar"
-            ? "بعد ظهور النتيجة، تحفظ الموارد العلاجية الخاصة بالأسئلة الخاطئة داخل نتيجة الاختبار نفسها."
-            : "After results, remedial resources for missed answers are saved inside the exam result."}
-        </p>
-      </div>
-
-      <button className="mt-3 w-full rounded-full bg-hero text-primary-foreground py-2.5 text-sm font-semibold shadow-glow">
-        {lang === "ar" ? "إنشاء اختبار تجريبي" : "Create mock exam"}
-      </button>
-    </div>
-  );
-}
-
-function ExamOption({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-2xl bg-muted/60 p-3">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-navy flex-shrink-0" />
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </p>
-      </div>
-      <p className="mt-1 text-xs font-bold text-navy leading-snug">{value}</p>
+      <Link
+        to="/mock-exam"
+        className="mt-3 block w-full rounded-full bg-hero text-primary-foreground py-2.5 text-center text-sm font-semibold shadow-glow"
+      >
+        {lang === "ar" ? "إنشاء اختبار ذاتي" : "Create self test"}
+      </Link>
     </div>
   );
 }

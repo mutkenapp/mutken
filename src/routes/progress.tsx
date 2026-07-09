@@ -114,7 +114,7 @@ function ProgressScreen() {
 
         <DailyAchievementsCard />
 
-        <div className="rounded-3xl bg-card border border-border p-4 shadow-soft overflow-hidden relative">
+        <div className="hidden rounded-3xl bg-card border border-border p-4 shadow-soft overflow-hidden relative">
           <div className="absolute inset-x-0 top-0 h-1 bg-mint-gradient" />
           <div className="flex items-start justify-between gap-3 pt-1">
             <div>
@@ -314,6 +314,57 @@ function ProgressScreen() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="border-t border-border pt-4">
+          <div className="rounded-3xl bg-card border border-border p-4 shadow-soft overflow-hidden relative">
+            <div className="absolute inset-x-0 top-0 h-1 bg-mint-gradient" />
+            <div className="flex items-start justify-between gap-3 pt-1">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {lang === "ar" ? "اختبار ذاتي" : "Self test"}
+                </p>
+                <h2 className="mt-0.5 text-xl font-extrabold text-navy">
+                  {lang === "ar" ? "جاهزية امتحان الرياضيات" : "Math exam readiness"}
+                </h2>
+                <p className="mt-1 text-xs leading-snug text-muted-foreground">
+                  {lang === "ar"
+                    ? "أنشئ اختبارًا جديدًا لمعرفة مستوى الجاهزية وتحديث الإتقان وخطة التعلم."
+                    : "Create a new exam to check readiness and update mastery and the study plan."}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-2xl bg-warn/20 text-navy flex items-center justify-center flex-shrink-0">
+                <FileCheck2 className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground">
+                  {lang === "ar" ? "آخر مستوى جاهزية" : "Latest readiness"}
+                </p>
+                <p className="text-4xl font-extrabold text-navy leading-none">72%</p>
+              </div>
+              <div className="text-end">
+                <p className="text-[11px] text-muted-foreground">
+                  {lang === "ar" ? "آخر اختبار" : "Last exam"}
+                </p>
+                <p className="text-sm font-bold text-navy">
+                  {lang === "ar" ? "١٨ / ٢٥ صحيح" : "18 / 25 correct"}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-full bg-mint-gradient rounded-full" style={{ width: "72%" }} />
+            </div>
+
+            <Link
+              to="/mock-exam"
+              className="mt-3 flex w-full items-center justify-center rounded-full bg-hero text-primary-foreground py-2.5 text-sm font-semibold shadow-glow"
+            >
+              {lang === "ar" ? "إنشاء اختبار ذاتي" : "Create self test"}
+            </Link>
           </div>
         </div>
       </div>
