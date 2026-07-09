@@ -16,10 +16,14 @@ import {
   Circle,
   Lock,
   Coins,
+  FileCheck2,
+  TimerReset,
+  Gauge,
+  SlidersHorizontal,
+  BookMarked,
   type LucideIcon,
 } from "lucide-react";
 import { resourcePointRules } from "@/lib/points";
-
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -54,29 +58,41 @@ const SUBJECTS: Subject[] = [
       {
         name: "Semester 1",
         units: [
-          { name: "Unit 1: Numbers", lessons: [
-            { title: "Place Value", duration: "6 min" },
-            { title: "Rounding", duration: "8 min" },
-            { title: "Estimation", duration: "5 min" },
-          ]},
-          { name: "Unit 2: Fractions", lessons: [
-            { title: "Intro to Fractions", duration: "7 min" },
-            { title: "Multiplying Fractions", duration: "9 min" },
-            { title: "Dividing Fractions", duration: "10 min" },
-          ]},
+          {
+            name: "Unit 1: Numbers",
+            lessons: [
+              { title: "Place Value", duration: "6 min" },
+              { title: "Rounding", duration: "8 min" },
+              { title: "Estimation", duration: "5 min" },
+            ],
+          },
+          {
+            name: "Unit 2: Fractions",
+            lessons: [
+              { title: "Intro to Fractions", duration: "7 min" },
+              { title: "Multiplying Fractions", duration: "9 min" },
+              { title: "Dividing Fractions", duration: "10 min" },
+            ],
+          },
         ],
       },
       {
         name: "Semester 2",
         units: [
-          { name: "Unit 3: Geometry", lessons: [
-            { title: "Angles", duration: "6 min" },
-            { title: "Triangles", duration: "8 min" },
-          ]},
-          { name: "Unit 4: Data", lessons: [
-            { title: "Reading Charts", duration: "5 min" },
-            { title: "Mean & Median", duration: "7 min" },
-          ]},
+          {
+            name: "Unit 3: Geometry",
+            lessons: [
+              { title: "Angles", duration: "6 min" },
+              { title: "Triangles", duration: "8 min" },
+            ],
+          },
+          {
+            name: "Unit 4: Data",
+            lessons: [
+              { title: "Reading Charts", duration: "5 min" },
+              { title: "Mean & Median", duration: "7 min" },
+            ],
+          },
         ],
       },
     ],
@@ -87,20 +103,25 @@ const SUBJECTS: Subject[] = [
     icon: FlaskConical,
     tint: "from-mint to-blue",
     semesters: [
-      { name: "Semester 1", units: [
-        { name: "Unit 1: Living Things", lessons: [
-          { title: "Cells", duration: "6 min" },
-          { title: "Plants", duration: "7 min" },
-        ]},
-        { name: "Unit 2: Matter", lessons: [
-          { title: "States of Matter", duration: "8 min" },
-        ]},
-      ]},
-      { name: "Semester 2", units: [
-        { name: "Unit 3: Energy", lessons: [
-          { title: "Forms of Energy", duration: "6 min" },
-        ]},
-      ]},
+      {
+        name: "Semester 1",
+        units: [
+          {
+            name: "Unit 1: Living Things",
+            lessons: [
+              { title: "Cells", duration: "6 min" },
+              { title: "Plants", duration: "7 min" },
+            ],
+          },
+          { name: "Unit 2: Matter", lessons: [{ title: "States of Matter", duration: "8 min" }] },
+        ],
+      },
+      {
+        name: "Semester 2",
+        units: [
+          { name: "Unit 3: Energy", lessons: [{ title: "Forms of Energy", duration: "6 min" }] },
+        ],
+      },
     ],
   },
   {
@@ -109,17 +130,22 @@ const SUBJECTS: Subject[] = [
     icon: BookOpen,
     tint: "from-warn to-blue",
     semesters: [
-      { name: "Semester 1", units: [
-        { name: "Unit 1: Grammar", lessons: [
-          { title: "Nouns & Verbs", duration: "5 min" },
-          { title: "Adjectives", duration: "6 min" },
-        ]},
-      ]},
-      { name: "Semester 2", units: [
-        { name: "Unit 2: Reading", lessons: [
-          { title: "Main Idea", duration: "7 min" },
-        ]},
-      ]},
+      {
+        name: "Semester 1",
+        units: [
+          {
+            name: "Unit 1: Grammar",
+            lessons: [
+              { title: "Nouns & Verbs", duration: "5 min" },
+              { title: "Adjectives", duration: "6 min" },
+            ],
+          },
+        ],
+      },
+      {
+        name: "Semester 2",
+        units: [{ name: "Unit 2: Reading", lessons: [{ title: "Main Idea", duration: "7 min" }] }],
+      },
     ],
   },
   {
@@ -128,16 +154,18 @@ const SUBJECTS: Subject[] = [
     icon: Languages,
     tint: "from-blue to-mint",
     semesters: [
-      { name: "Semester 1", units: [
-        { name: "الوحدة ١: القراءة", lessons: [
-          { title: "نص القراءة", duration: "6 min" },
-        ]},
-      ]},
-      { name: "Semester 2", units: [
-        { name: "الوحدة ٢: النحو", lessons: [
-          { title: "المبتدأ والخبر", duration: "7 min" },
-        ]},
-      ]},
+      {
+        name: "Semester 1",
+        units: [
+          { name: "الوحدة ١: القراءة", lessons: [{ title: "نص القراءة", duration: "6 min" }] },
+        ],
+      },
+      {
+        name: "Semester 2",
+        units: [
+          { name: "الوحدة ٢: النحو", lessons: [{ title: "المبتدأ والخبر", duration: "7 min" }] },
+        ],
+      },
     ],
   },
   {
@@ -146,11 +174,10 @@ const SUBJECTS: Subject[] = [
     icon: Globe,
     tint: "from-mint to-warn",
     semesters: [
-      { name: "Semester 1", units: [
-        { name: "Unit 1: Geography", lessons: [
-          { title: "Maps", duration: "5 min" },
-        ]},
-      ]},
+      {
+        name: "Semester 1",
+        units: [{ name: "Unit 1: Geography", lessons: [{ title: "Maps", duration: "5 min" }] }],
+      },
     ],
   },
 ];
@@ -196,7 +223,9 @@ function LibraryScreen() {
               className="mt-1 w-full rounded-2xl bg-card border border-border px-3 py-2.5 text-sm shadow-soft outline-none"
             >
               {GRADES.map((g) => (
-                <option key={g} value={g}>{g}</option>
+                <option key={g} value={g}>
+                  {g}
+                </option>
               ))}
             </select>
           </label>
@@ -211,7 +240,9 @@ function LibraryScreen() {
             >
               <option value="all">All subjects</option>
               {SUBJECTS.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
               ))}
             </select>
           </label>
@@ -219,6 +250,8 @@ function LibraryScreen() {
       </header>
 
       <div className="px-5 space-y-4">
+        <MockExamBuilderCard lang={lang} />
+
         <div className="rounded-3xl bg-card border border-border p-4 shadow-soft">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
@@ -226,7 +259,9 @@ function LibraryScreen() {
                 {lang === "ar" ? "نقاط الموارد" : "Resource points"}
               </p>
               <p className="font-semibold mt-0.5">
-                {lang === "ar" ? "شاهد وتدرّب لتفتح لوحة التفوق" : "Watch and practice to unlock the leaderboard"}
+                {lang === "ar"
+                  ? "شاهد وتدرّب لتفتح لوحة التفوق"
+                  : "Watch and practice to unlock the leaderboard"}
               </p>
             </div>
             <Coins className="h-5 w-5 text-navy" />
@@ -234,7 +269,9 @@ function LibraryScreen() {
           <div className="grid grid-cols-2 gap-2">
             {resourcePointRules.map((rule) => (
               <div key={rule.label.en} className="rounded-2xl bg-muted/60 p-3">
-                <p className="text-[11px] text-muted-foreground leading-tight">{rule.label[lang]}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">
+                  {rule.label[lang]}
+                </p>
                 <p className="mt-1 text-sm font-bold text-navy">{rule.points}</p>
               </div>
             ))}
@@ -294,7 +331,6 @@ function SubjectLessons({
     .filter((s) => s.units.length > 0);
   const hasAny = visibleSemesters.some((s) => s.units.length > 0);
 
-
   if (openLesson) {
     return (
       <LessonVideos
@@ -323,9 +359,7 @@ function SubjectLessons({
               <subject.icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">
-                Subject
-              </p>
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Subject</p>
               <p className="font-semibold text-sm">{subject.name}</p>
             </div>
           </div>
@@ -341,7 +375,9 @@ function SubjectLessons({
           >
             <option value="all">All semesters</option>
             {semesters.map((s) => (
-              <option key={s.name} value={s.name}>{s.name}</option>
+              <option key={s.name} value={s.name}>
+                {s.name}
+              </option>
             ))}
           </select>
           <select
@@ -351,13 +387,39 @@ function SubjectLessons({
           >
             <option value="all">All units</option>
             {allUnits.map((u) => (
-              <option key={u.name} value={u.name}>{u.name}</option>
+              <option key={u.name} value={u.name}>
+                {u.name}
+              </option>
             ))}
           </select>
         </div>
       </header>
 
       <div className="px-5 py-4 space-y-6">
+        <div className="rounded-2xl bg-card border border-border p-4 shadow-soft overflow-hidden relative">
+          <div className="absolute inset-x-0 top-0 h-1 bg-mint-gradient" />
+          <div className="flex items-start gap-3 pt-1">
+            <div className="h-10 w-10 rounded-2xl bg-warn/20 text-navy flex items-center justify-center flex-shrink-0">
+              <FileCheck2 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                {lang === "ar" ? "اختبار على هذا النطاق" : "Exam for this scope"}
+              </p>
+              <h3 className="text-sm font-extrabold text-navy leading-tight">
+                {lang === "ar"
+                  ? "أنشئ اختبارًا من الوحدات والدروس المحددة"
+                  : "Create an exam from selected units and lessons"}
+              </h3>
+              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                {lang === "ar"
+                  ? "النتيجة ستحدث الإتقان وتربط كل خطأ بمورد علاجي محفوظ."
+                  : "The result updates mastery and links each mistake to saved remediation."}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {visibleSemesters.map((s) => (
           <section key={s.name}>
             <h2 className="text-lg font-bold px-1 mb-3">{s.name}</h2>
@@ -397,8 +459,91 @@ function SubjectLessons({
           <p className="text-center text-sm text-muted-foreground py-8">No lessons found.</p>
         )}
       </div>
-
     </MobileShell>
+  );
+}
+
+function MockExamBuilderCard({ lang }: { lang: "ar" | "en" }) {
+  return (
+    <div className="rounded-3xl bg-card border border-border p-4 shadow-soft overflow-hidden relative">
+      <div className="absolute inset-x-0 top-0 h-1 bg-mint-gradient" />
+      <div className="flex items-start justify-between gap-3 pt-1">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            {lang === "ar" ? "منشئ الاختبار التجريبي" : "Mock exam builder"}
+          </p>
+          <h2 className="mt-0.5 text-lg font-extrabold text-navy">
+            {lang === "ar" ? "اختبر جاهزيتك للامتحان النهائي" : "Build a final-exam readiness test"}
+          </h2>
+          <p className="mt-1 text-xs leading-snug text-muted-foreground">
+            {lang === "ar"
+              ? "اختر عدد الأسئلة، الوقت، الصعوبة، والوحدات أو الدروس. النتيجة تحدث الإتقان وخطة التعلم."
+              : "Choose questions, timing, difficulty, and chapters or lessons. Results update mastery and the study plan."}
+          </p>
+        </div>
+        <div className="h-12 w-12 rounded-2xl bg-warn/20 text-navy flex items-center justify-center flex-shrink-0">
+          <FileCheck2 className="h-5 w-5" />
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <ExamOption
+          icon={FileCheck2}
+          label={lang === "ar" ? "عدد الأسئلة" : "Questions"}
+          value={lang === "ar" ? "٢٥ سؤال" : "25 questions"}
+        />
+        <ExamOption
+          icon={TimerReset}
+          label={lang === "ar" ? "الوقت" : "Timing"}
+          value={lang === "ar" ? "بوقت أو بدون" : "Timed or untimed"}
+        />
+        <ExamOption
+          icon={Gauge}
+          label={lang === "ar" ? "الصعوبة" : "Difficulty"}
+          value={lang === "ar" ? "سهل / متوسط / صعب" : "Easy / Medium / Hard"}
+        />
+        <ExamOption
+          icon={SlidersHorizontal}
+          label={lang === "ar" ? "النطاق" : "Scope"}
+          value={lang === "ar" ? "فصول ودروس محددة" : "Chapters and lessons"}
+        />
+      </div>
+
+      <div className="mt-3 rounded-2xl bg-blue/5 border border-blue/10 p-3 flex items-start gap-3">
+        <BookMarked className="h-4 w-4 text-navy mt-0.5 flex-shrink-0" />
+        <p className="text-[11px] leading-snug text-muted-foreground">
+          {lang === "ar"
+            ? "بعد ظهور النتيجة، تحفظ الموارد العلاجية الخاصة بالأسئلة الخاطئة داخل نتيجة الاختبار نفسها."
+            : "After results, remedial resources for missed answers are saved inside the exam result."}
+        </p>
+      </div>
+
+      <button className="mt-3 w-full rounded-full bg-hero text-primary-foreground py-2.5 text-sm font-semibold shadow-glow">
+        {lang === "ar" ? "إنشاء اختبار تجريبي" : "Create mock exam"}
+      </button>
+    </div>
+  );
+}
+
+function ExamOption({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-muted/60 p-3">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-navy flex-shrink-0" />
+        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </p>
+      </div>
+      <p className="mt-1 text-xs font-bold text-navy leading-snug">{value}</p>
+    </div>
   );
 }
 
@@ -454,8 +599,7 @@ function LessonVideos({
             const locked = v.status === "locked";
             const done = v.status === "done";
             const inProgress = v.status === "progress";
-            const thumb =
-              v.thumbnail || `https://img.youtube.com/vi/${v.youtubeId}/hqdefault.jpg`;
+            const thumb = v.thumbnail || `https://img.youtube.com/vi/${v.youtubeId}/hqdefault.jpg`;
             const row = (
               <div
                 className={`flex items-center gap-3 px-3 py-2.5 ${locked ? "opacity-60" : ""} ${
@@ -504,9 +648,7 @@ function LessonVideos({
                       {t("common.inProgress")}
                     </span>
                   )}
-                  {v.status === "todo" && (
-                    <Circle className="h-4 w-4 text-muted-foreground" />
-                  )}
+                  {v.status === "todo" && <Circle className="h-4 w-4 text-muted-foreground" />}
                   <ChevronRight
                     className={`h-4 w-4 text-muted-foreground ${dir === "rtl" ? "rotate-180" : ""}`}
                   />

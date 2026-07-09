@@ -20,12 +20,18 @@ import {
   Target,
   Clock3,
   CalendarDays,
+  FileCheck2,
+  TimerReset,
+  BookMarked,
 } from "lucide-react";
 
-const sessionMissions: Record<SubjectId, {
-  date: { ar: string; en: string };
-  time: { ar: string; en: string };
-}> = {
+const sessionMissions: Record<
+  SubjectId,
+  {
+    date: { ar: string; en: string };
+    time: { ar: string; en: string };
+  }
+> = {
   math: {
     date: { ar: "الأربعاء - ٨/٧/٢٠٢٦", en: "Wed, 08/07/2026" },
     time: { ar: "٦:٣٠ مساءً", en: "6:30 PM" },
@@ -43,8 +49,6 @@ const sessionMissions: Record<SubjectId, {
     time: { ar: "٥:٣٠ مساءً", en: "5:30 PM" },
   },
 };
-
-
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,7 +69,6 @@ function TodayScreen() {
   const unlockPointsLabel = lang === "ar" ? "١٠٠" : leaderboardUnlockPoints;
   const pointsRemainingLabel = lang === "ar" ? "١٥" : pointsRemaining;
   const sessionMission = sessionMissions[active.id];
-
 
   return (
     <MobileShell>
@@ -145,19 +148,25 @@ function TodayScreen() {
             <div className="absolute inset-x-0 top-0 h-1 bg-mint-gradient" />
             <div className="pt-1">
               <div className="flex items-center justify-between gap-1.5">
-                <p className="text-[10px] text-muted-foreground leading-tight">{t("today.nextMeeting")}</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  {t("today.nextMeeting")}
+                </p>
                 <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-mint/20 text-navy whitespace-nowrap">
                   {t(active.meetingInKey)}
                 </span>
               </div>
-              <p className="mt-1 text-[12.5px] font-extrabold leading-tight line-clamp-2">{t(active.meetingTitleKey)}</p>
+              <p className="mt-1 text-[12.5px] font-extrabold leading-tight line-clamp-2">
+                {t(active.meetingTitleKey)}
+              </p>
               <div className="mt-1.5 flex items-center gap-1.5 min-w-0">
                 <img
                   src={active.teacherPhoto}
                   alt={t(active.teacherNameKey)}
                   className="h-5 w-5 rounded-full object-cover border border-border"
                 />
-                <p className="text-[10.5px] text-blue font-semibold truncate">{t(active.teacherNameKey)}</p>
+                <p className="text-[10.5px] text-blue font-semibold truncate">
+                  {t(active.teacherNameKey)}
+                </p>
               </div>
               <div className="mt-1.5 rounded-xl bg-blue/5 border border-blue/10 px-2 py-1.5">
                 <div className="flex items-center gap-1.5">
@@ -199,7 +208,9 @@ function TodayScreen() {
               </div>
               <div className="mt-1.5 flex items-end justify-between gap-2">
                 <div>
-                  <p className="text-[24px] font-extrabold text-navy leading-none">{leaderboardPercentLabel}%</p>
+                  <p className="text-[24px] font-extrabold text-navy leading-none">
+                    {leaderboardPercentLabel}%
+                  </p>
                   <p className="mt-0.5 text-[9px] font-semibold text-muted-foreground whitespace-nowrap">
                     {lang === "ar"
                       ? `${weeklyPointsLabel} / ${unlockPointsLabel} نقطة`
@@ -230,9 +241,73 @@ function TodayScreen() {
           </div>
         </div>
 
-
         <DailyAchievementsCard />
 
+        {/* Mock exam readiness */}
+        <div className="rounded-lg bg-card border border-border p-4 shadow-soft overflow-hidden relative">
+          <div className="absolute inset-x-0 top-0 h-1 bg-mint-gradient" />
+          <div className="flex items-start gap-3 pt-1">
+            <div className="h-11 w-11 rounded-2xl bg-warn/20 text-navy flex items-center justify-center flex-shrink-0">
+              <FileCheck2 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                {lang === "ar" ? "اختبار تجريبي موصى به" : "Recommended mock exam"}
+              </p>
+              <h3 className="mt-0.5 text-[15px] font-extrabold leading-tight text-navy">
+                {lang === "ar"
+                  ? "اختبر جاهزيتك قبل امتحان الرياضيات"
+                  : "Check your readiness before the Math exam"}
+              </h3>
+              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                {lang === "ar"
+                  ? "النظام سيحدث الإتقان والخطة حسب الإجابات، ويحفظ علاجًا خاصًا للأسئلة الخاطئة."
+                  : "Results update mastery and the plan, with saved remediation for missed questions."}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <ExamMetric
+              icon={FileCheck2}
+              label={lang === "ar" ? "٢٥ سؤال" : "25 questions"}
+              sub={lang === "ar" ? "مختلط" : "Mixed"}
+            />
+            <ExamMetric
+              icon={TimerReset}
+              label={lang === "ar" ? "٤٥ دقيقة" : "45 min"}
+              sub={lang === "ar" ? "بوقت" : "Timed"}
+            />
+            <ExamMetric
+              icon={BookMarked}
+              label={lang === "ar" ? "وحدتان" : "2 units"}
+              sub={lang === "ar" ? "كسور" : "Fractions"}
+            />
+          </div>
+
+          <div className="mt-3 rounded-2xl bg-muted/70 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold text-navy">
+                  {lang === "ar" ? "جاهزيتك المتوقعة" : "Expected readiness"}
+                </p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {lang === "ar"
+                    ? "سيركز العلاج على مسائل الكسور والمقامات المختلفة"
+                    : "Remediation will focus on word problems and denominators"}
+                </p>
+              </div>
+              <p className="text-2xl font-extrabold text-navy">72%</p>
+            </div>
+            <div className="mt-2 h-1.5 rounded-full bg-card overflow-hidden">
+              <div className="h-full rounded-full bg-mint-gradient" style={{ width: "72%" }} />
+            </div>
+          </div>
+
+          <button className="mt-3 w-full rounded-full bg-hero text-primary-foreground py-2.5 text-sm font-semibold shadow-glow">
+            {lang === "ar" ? "ابدأ اختبار الجاهزية" : "Start readiness exam"}
+          </button>
+        </div>
 
         {/* Today's Tasks — Timeline */}
         <div className="rounded-lg bg-card border border-border p-4 shadow-soft">
@@ -254,12 +329,10 @@ function TodayScreen() {
               const circleClass = done
                 ? "bg-success text-white"
                 : inProgress
-                ? "bg-blue text-white"
-                : "bg-muted text-muted-foreground";
+                  ? "bg-blue text-white"
+                  : "bg-muted text-muted-foreground";
 
-              const cardClass = inProgress
-                ? "bg-blue/5 border-blue/10"
-                : "bg-card border-border";
+              const cardClass = inProgress ? "bg-blue/5 border-blue/10" : "bg-card border-border";
 
               const thumb = v.thumbnail ? (
                 <img src={v.thumbnail} alt="" className="h-full w-full object-cover" />
@@ -283,14 +356,15 @@ function TodayScreen() {
 
               const rowContent = (
                 <div className="flex min-h-[78px] items-stretch" dir={dir}>
-                  <div className="w-[86px] flex-shrink-0 overflow-hidden">
-                    {thumb}
-                  </div>
+                  <div className="w-[86px] flex-shrink-0 overflow-hidden">{thumb}</div>
                   <div className="flex min-w-0 flex-1 items-center px-3 py-2">
                     <div className="min-w-0">
-                      <p className="text-[14px] font-semibold leading-tight line-clamp-1 text-navy">{v.title[lang]}</p>
+                      <p className="text-[14px] font-semibold leading-tight line-clamp-1 text-navy">
+                        {v.title[lang]}
+                      </p>
                       <p className="mt-0.5 text-[12px] text-muted-foreground">
-                        {v.duration[lang]} · {v.questions.length} {lang === "ar" ? "أسئلة" : "questions"}
+                        {v.duration[lang]} · {v.questions.length}{" "}
+                        {lang === "ar" ? "أسئلة" : "questions"}
                       </p>
                       <p className="mt-0.5 text-[10px] font-bold text-navy">
                         {done
@@ -313,7 +387,9 @@ function TodayScreen() {
                 <div key={v.id} className="flex gap-3 mb-3 last:mb-0">
                   {/* Timeline column */}
                   <div className="relative flex flex-col items-center w-8 shrink-0 self-stretch">
-                    <div className={`z-10 h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold absolute top-1/2 -translate-y-1/2 ${circleClass}`}>
+                    <div
+                      className={`z-10 h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold absolute top-1/2 -translate-y-1/2 ${circleClass}`}
+                    >
                       {i + 1}
                     </div>
                     {!last && (
@@ -323,7 +399,9 @@ function TodayScreen() {
 
                   {/* Card */}
                   {locked ? (
-                    <div className={`flex-1 overflow-hidden rounded-lg border shadow-soft opacity-60 ${cardClass}`}>
+                    <div
+                      className={`flex-1 overflow-hidden rounded-lg border shadow-soft opacity-60 ${cardClass}`}
+                    >
                       {rowContent}
                     </div>
                   ) : (
@@ -340,11 +418,26 @@ function TodayScreen() {
             })}
           </div>
         </div>
-
-
-
       </div>
     </MobileShell>
+  );
+}
+
+function ExamMetric({
+  icon: Icon,
+  label,
+  sub,
+}: {
+  icon: typeof FileCheck2;
+  label: string;
+  sub: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-muted/60 px-2 py-2 text-center">
+      <Icon className="mx-auto h-4 w-4 text-navy" />
+      <p className="mt-1 text-[11px] font-bold text-navy leading-tight">{label}</p>
+      <p className="mt-0.5 text-[9px] text-muted-foreground leading-tight">{sub}</p>
+    </div>
   );
 }
 

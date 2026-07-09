@@ -24,6 +24,7 @@ Primary prototype domain: https://app.mutken.com
 14. [Module: Assistant Teacher Chat](#14-module-assistant-teacher-chat)
 15. [Module: Progress](#15-module-progress)
 16. [Module: Challenges](#16-module-challenges)
+16.1 [Module: Mock Exams and Exam Readiness](#161-module-mock-exams-and-exam-readiness)
 17. [Module: Commercial Subscription](#17-module-commercial-subscription)
 18. [Module: Registration, Login, and Profile Identity](#18-module-registration-login-and-profile-identity)
 19. [Entitlement Matrix](#19-entitlement-matrix)
@@ -228,8 +229,9 @@ The first commercial version should include these modules:
 6. Assistant Teacher Chat
 7. Progress
 8. Challenges
-9. Commercial Subscription
-10. Registration, Login, and Profile Identity
+9. Mock Exams and Exam Readiness
+10. Commercial Subscription
+11. Registration, Login, and Profile Identity
 
 ## 9. Module: Study Plan
 
@@ -1189,6 +1191,154 @@ The app should show:
 - Student can see rewards before starting.
 - Student can see whether excellence board is locked or unlocked.
 - Student can see ranking after activation.
+
+## 16.1 Module: Mock Exams and Exam Readiness
+
+### Purpose
+
+Mock Exams help students, especially Grade 12 students, understand how ready they are for final exams. The module lets a student generate an exam from selected curriculum scope, complete it under practice or timed conditions, receive a readiness result, and access saved remedial content for incorrect answers.
+
+### User Value
+
+Students need more than daily lessons. Before final exams, they need to know:
+
+- Am I ready for the final exam?
+- Which chapters or lessons still need revision?
+- Can I solve under time pressure?
+- Which mistakes should I fix first?
+- What should I study after this exam?
+
+### Core Features
+
+- Create mock exam from the Library, Study Plan, or Progress screen.
+- Select subject.
+- Select curriculum scope:
+  - Full subject.
+  - Semester.
+  - Unit/chapter.
+  - Lesson.
+  - Weak objectives only.
+  - Previous mistakes only.
+- Select number of questions.
+- Select timed or untimed mode.
+- Select difficulty:
+  - Easy.
+  - Medium.
+  - Hard.
+  - Mixed.
+  - Final exam simulation.
+- Select exam mode:
+  - Quick practice.
+  - Mock exam.
+  - Final exam simulation.
+  - Weak-area exam.
+- Randomize question order where appropriate.
+- Show result at the end.
+- Save exam history and result.
+- Save remedial content recommendations inside each generated exam result.
+- Link incorrect answers to explanations, learning objectives, and remedial resources.
+- Allow student to return to an old exam result and open saved remedial content outside the daily Study Plan.
+
+### Exam Modes
+
+| Mode | Purpose |
+| --- | --- |
+| Quick practice | Short, flexible check with optional immediate feedback |
+| Mock exam | Structured exam with result at the end |
+| Final exam simulation | Timed, mixed difficulty, broad scope for Grade 12 readiness |
+| Weak-area exam | Generated from low mastery or low confidence objectives |
+| Previous mistakes exam | Re-tests questions or objectives the student missed before |
+
+### Result Requirements
+
+The result should show:
+
+- Overall score.
+- Exam readiness percentage.
+- Time used.
+- Accuracy by semester, unit/chapter, lesson, and learning objective.
+- Accuracy by difficulty.
+- Correct answers.
+- Incorrect answers.
+- Explanation for each incorrect answer.
+- Strong areas.
+- Weak areas.
+- Mastery and confidence changes.
+- Recommended remedial content.
+- Recommended next exam or retake.
+
+### Remedial Content Rules
+
+- Each incorrect answer should link to one or more remedial resources when available.
+- Remedial resources are saved with the exam result.
+- Saved remedial content remains accessible from the exam result even if the daily Study Plan changes.
+- Completing saved remedial content can create normal resource points and learning evidence.
+- Saved remedial resources can also be recommended in the daily Study Plan when the weakness is important.
+- The exam result should show which remedial items were completed later.
+
+### Mastery and Study Plan Impact
+
+- Every exam question must map to a learning objective.
+- Every answer creates a learning event.
+- Mock exam answers are stronger evidence than ordinary engagement actions.
+- Correct first-attempt answers increase mastery and confidence.
+- Incorrect answers reduce mastery for the linked objective, especially when repeated.
+- Timed correct answers can increase confidence more than untimed correct answers.
+- Untimed answers still affect mastery, but with lower exam-readiness weight.
+- Final exam simulation can have stronger readiness impact than quick practice.
+- After exam completion, the Study Plan should recalculate weak areas and may recommend remedial clips, targeted Library practice, missed-question retry, or another smaller exam.
+- The active daily Study Plan should not be disrupted unless the exam reveals a critical weakness.
+
+### Free vs Paid Rules
+
+Free users:
+
+- Can create limited mock exams per week.
+- Have a limited maximum question count.
+- Can see a basic result.
+- Can access limited remedial content.
+- May have final exam simulation locked or capped.
+
+Paid users:
+
+- Can create unlimited mock exams inside subscribed subjects.
+- Can use larger exam sizes.
+- Can access timed final exam simulation.
+- Can view full readiness analytics.
+- Can save full exam history.
+- Can access all remedial content for subscribed subjects.
+- Can generate weak-area and previous-mistakes exams.
+
+### Points Rules
+
+Mock Exams should affect mastery more than points. Points should reward completion and improvement without dominating the excellence board.
+
+| Action | Points |
+| --- | ---: |
+| Complete mock exam | +20 |
+| Score 80%+ | +30 |
+| Improve from previous exam | +25 |
+| Complete remedial content from exam result | Uses normal resource points |
+| Retake weak-area exam and improve | +30 |
+
+### Placement in App
+
+- Study Plan: recommended card when a student completes a unit, approaches final review, has low confidence mastery, or needs readiness check.
+- Progress: exam readiness section with latest score, readiness percentage, weak chapters, and saved remedial content.
+- Library: mock exam builder where the student chooses scope, number of questions, timing, and difficulty.
+
+### Acceptance Criteria
+
+- Student can create a mock exam from selected curriculum scope.
+- Student can choose question count, timed/untimed mode, and difficulty.
+- Student can complete an exam and see result at the end.
+- Result updates mastery and confidence through learning events.
+- Result shows weak objectives and recommended remedial content.
+- Remedial content is saved with the exam result.
+- Student can return to an old exam result and open saved remedial content.
+- Study Plan can use exam result to recommend next actions.
+- Free users see caps and upgrade prompts.
+- Paid users have full access inside subscribed subjects.
 
 ## 17. Module: Commercial Subscription
 
@@ -2270,6 +2420,57 @@ Includes:
 - Student progress
 - Completion status
 
+### Mock Exam
+
+- Mock exam ID
+- Student ID
+- Subject ID
+- Curriculum scope: subject, semester, unit/chapter, lesson, weak objectives, or previous mistakes
+- Selected learning objective IDs
+- Question count
+- Timing mode: timed or untimed
+- Time limit in minutes
+- Difficulty mode: easy, medium, hard, mixed, or final exam simulation
+- Exam mode: quick practice, mock exam, final simulation, weak-area exam, or previous-mistakes exam
+- Generated question IDs
+- Status: generated, started, submitted, completed, expired
+- Created timestamp
+- Started timestamp
+- Submitted timestamp
+
+### Mock Exam Attempt / Result
+
+- Exam attempt ID
+- Mock exam ID
+- Student ID
+- Score
+- Readiness percentage
+- Time used
+- Correct answer count
+- Incorrect answer count
+- Accuracy by objective
+- Accuracy by unit/chapter
+- Accuracy by difficulty
+- Strong objective IDs
+- Weak objective IDs
+- Mastery change summary
+- Confidence change summary
+- Recommended next action
+- Created timestamp
+
+### Mock Exam Remediation
+
+- Remediation ID
+- Mock exam attempt ID
+- Question ID
+- Learning objective ID
+- Incorrect answer reference
+- Explanation reference
+- Recommended resource IDs
+- Recommended practice set ID
+- Completion status
+- Completed timestamp
+
 ## 27. Analytics Requirements
 
 ### Acquisition Metrics
@@ -2327,6 +2528,12 @@ Includes:
 - Mastery improvement by plan item type
 - Videos watched but failed questions
 - Questions with high wrong-answer rate
+- Mock exams generated
+- Mock exam completion rate
+- Final exam readiness trend
+- Readiness by subject, unit, and lesson
+- Remedial content completion after mock exam
+- Improvement between mock exam attempts
 - Marker question accuracy
 - First-try correct answer rate
 - Hint-to-correct conversion rate
@@ -2430,6 +2637,7 @@ The list below is the full commercial MVP scope. Delivery should follow the phas
 - Live session prototype flow.
 - Assistant teacher chat with study plan recommendations and rewardable clips.
 - Progress summary.
+- Mock Exams and Exam Readiness.
 - Weekly challenges.
 - Assistant teacher reward rules.
 
@@ -2477,6 +2685,10 @@ The list below is the full commercial MVP scope. Delivery should follow the phas
 - Watch percentage awards points but does not control resource completion.
 - Watch percentage alone does not mark mastery as complete.
 - Resource completion cannot duplicate stars or points.
+- Mock exam creation works with selected scope, timing, difficulty, and question count.
+- Mock exam results update mastery and confidence.
+- Mock exam result saves remedial content for incorrect answers.
+- Saved exam remediation can be opened later outside the daily Study Plan.
 - Assistant teacher chat can recommend a study plan item.
 - Assistant teacher chat can recommend a short clip with reward.
 - Assistant teacher reward points are capped and traceable.
@@ -2513,3 +2725,8 @@ The list below is the full commercial MVP scope. Delivery should follow the phas
 21. Minimum confidence threshold required before treating an objective as mastered.
 22. Whether teacher review queue is included in Phase 1 or starts in Phase 2.
 23. Relative weighting of live quiz answers compared with Library and resource questions.
+24. Maximum free mock exams per week.
+25. Maximum free mock exam question count.
+26. Whether final exam simulation is paid-only from launch.
+27. Grade 12 launch subjects and exam blueprint structure.
+28. Whether mock exam questions should include past official exam style from launch.

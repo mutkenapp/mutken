@@ -19,6 +19,7 @@ Target platforms: Android, iOS, responsive web admin, responsive web teacher con
 9. [Content Repository and Curriculum CMS](#9-content-repository-and-curriculum-cms)
 10. [Study Plan Recommendation System](#10-study-plan-recommendation-system)
 11. [Resource Lesson Engine](#11-resource-lesson-engine)
+11.1 [Mock Exam and Exam Readiness Engine](#111-mock-exam-and-exam-readiness-engine)
 12. [Points, Excellence Board, and Challenges Engine](#12-points-excellence-board-and-challenges-engine)
 13. [Subscription, Payment, and Entitlement Engine](#13-subscription-payment-and-entitlement-engine)
 14. [Live Session Platform](#14-live-session-platform)
@@ -206,6 +207,7 @@ The MVP backend should be split into clear modules inside one backend applicatio
 | Learning Evidence Engine | Yes | Append-only evidence events from resources, Library practice, live quizzes, teacher tasks, and challenges | API module + event writer + idempotency |
 | Mastery Engine | Yes | Objective mastery score, confidence score, weak area summaries, recency/diversity weighting | Rules service + aggregation jobs |
 | Resource Learning Engine | Yes | Watch progress, video markers, question attempts, stars, completion, evidence events | API module + event writes |
+| Mock Exam Engine | Yes | Exam generation, attempts, timed mode, readiness score, saved remediation, mastery updates | Rules engine + question bank + evidence writes |
 | Points Ledger | Yes | Points events, weekly/lifetime points, idempotency, anti-abuse | PostgreSQL transaction tables |
 | Entitlement Engine | Yes | Free caps, paid subject access, subscription state, locked content | Central policy service in backend |
 | Subscription and Payment | Yes | Packages, monthly billing state, payment references, manual reconciliation | Payment adapter + webhook handler |
@@ -253,6 +255,7 @@ Reasons:
 | Localization | Arabic/English content and layout | i18next or equivalent, RTL handling |
 | Video playback | HLS video, watch progress events, marker overlays | Expo AV or native video player package |
 | Resource questions | Marker-triggered questions, answer feedback, stars | Native React Native components |
+| Mock exams | Question selection, timed/untimed mode, exam progress, result review, saved remediation | React Native screens + timer state + API persistence |
 | Push notifications | Study reminders, live session reminders, payment reminders | Expo Notifications or Firebase Cloud Messaging |
 | Offline tolerance | Cache current plan and last loaded resources | TanStack Query persistence, local storage |
 | Payments | External/provider checkout or store-compliant in-app flow | Provider SDK or secure web checkout after policy review |
@@ -270,10 +273,11 @@ Reasons:
 6. Library.
 7. Resource lesson page.
 8. Progress summary.
-9. Subscription/upgrade flow.
-10. Payment status.
-11. Assistant chat placeholder or Phase 2 chat.
-12. Live session placeholder or Phase 3 live.
+9. Mock exam builder and result history.
+10. Subscription/upgrade flow.
+11. Payment status.
+12. Assistant chat placeholder or Phase 2 chat.
+13. Live session placeholder or Phase 3 live.
 
 ### Mobile Payment Note
 
@@ -394,6 +398,8 @@ Requirements:
 - Manage resources under lessons.
 - Manage video markers and questions.
 - Map resources, video markers, resource questions, Library questions, live questions, teacher tasks, and challenge questions to learning objectives.
+- Configure mock exam eligibility for question-bank items.
+- Configure exam blueprint rules by grade, subject, semester, unit/chapter, lesson, objective, difficulty, and final-exam simulation.
 - Mark one primary objective and optional secondary objectives per question.
 - Show objective coverage per lesson before publishing.
 - Publish/unpublish content.
@@ -456,6 +462,12 @@ Requirements:
 - Videos watched but failed questions.
 - Live sessions causing mastery improvement.
 - Teacher review outcomes.
+- Mock exams generated.
+- Mock exam completion rate.
+- Final exam readiness trend.
+- Readiness by subject, unit, lesson, and objective.
+- Remedial content completion after mock exam.
+- Improvement between mock exam attempts.
 - Monetization: MRR, package distribution, renewal/cancellation.
 - Teacher operations: rewards, chats, live questions.
 
@@ -999,6 +1011,129 @@ Every write endpoint should internally create a learning event when it provides 
 - Events: points events, learning events, and learning analytics.
 - Mobile: native video player with marker overlay.
 
+## 11.1 Mock Exam and Exam Readiness Engine
+
+### Purpose
+
+The Mock Exam Engine lets students generate exam-style assessments from selected curriculum scope and use the result to understand readiness for final exams. It is especially important for Grade 12 final exam preparation.
+
+### Required Business Rules
+
+- Student can generate an exam by subject, semester, unit/chapter, lesson, weak objectives, or previous mistakes.
+- Student can choose number of questions.
+- Student can choose timed or untimed mode.
+- Student can choose difficulty: easy, medium, hard, mixed, or final exam simulation.
+- Student can choose exam mode: quick practice, mock exam, final simulation, weak-area exam, or previous-mistakes exam.
+- Every exam question must map to a learning objective.
+- Exam answers create learning events and update mastery/confidence.
+- Exam completion creates an exam result with readiness score.
+- Incorrect answers should link to explanation and remedial resources.
+- Remedial resources must be saved with the exam result so the student can return later.
+- Saved exam remediation can be opened outside the daily Study Plan.
+- Study Plan can still use exam weakness to recommend daily remediation when important.
+- The active Study Plan should not be disrupted unless the exam exposes critical weakness.
+
+### Exam Generation Inputs
+
+| Input | Purpose |
+| --- | --- |
+| Student ID | Personalize by entitlement, mastery, and history |
+| Subject ID | Select subscribed or free-capped subject |
+| Curriculum scope | Limit to semester, unit/chapter, lesson, objectives, or full subject |
+| Question count | Control exam length |
+| Timing mode | Practice vs exam simulation |
+| Difficulty mode | Easy, medium, hard, mixed, final simulation |
+| Exam mode | Quick practice, mock exam, final simulation, weak area, previous mistakes |
+| Objective mastery | Include weak objectives or balanced coverage |
+| Previous attempts | Avoid excessive repeats or intentionally retest mistakes |
+| Entitlement | Apply free caps and paid subject access |
+
+### Exam Result Output
+
+The result API should return:
+
+- Score.
+- Readiness percentage.
+- Time used.
+- Correct and incorrect counts.
+- Accuracy by objective.
+- Accuracy by unit/chapter and lesson.
+- Accuracy by difficulty.
+- Strong and weak objectives.
+- Mastery and confidence changes.
+- Incorrect answer review.
+- Remedial resource recommendations.
+- Suggested next action.
+- Retake or weak-area exam recommendation.
+
+### Readiness Scoring
+
+Readiness should be separate from ordinary mastery.
+
+Suggested MVP approach:
+
+```text
+readinessScore =
+  weighted objective accuracy
+  + difficulty performance
+  + time management factor
+  + mastery confidence factor
+  - repeated mistake penalty
+```
+
+Rules:
+
+- Timed final simulation has higher readiness weight than quick practice.
+- Untimed exams still affect mastery but should have lower readiness weight.
+- A short exam should not produce high-confidence final readiness by itself.
+- Readiness should be shown by subject and optionally by unit/chapter.
+
+### Remediation Storage
+
+For each incorrect answer, the backend should store:
+
+- Question ID.
+- Student answer.
+- Correct answer.
+- Explanation reference.
+- Learning objective ID.
+- Recommended resource IDs.
+- Recommended practice set ID.
+- Completion status for each remedial item.
+
+This allows the exam result page to remain useful after the daily Study Plan changes.
+
+### Required APIs
+
+| API | Purpose |
+| --- | --- |
+| `POST /api/v1/mock-exams/generate` | Generate exam from selected options |
+| `GET /api/v1/mock-exams/:id` | Load exam structure and questions |
+| `POST /api/v1/mock-exams/:id/start` | Start timed or untimed attempt |
+| `POST /api/v1/mock-exams/:id/answers` | Submit or autosave answer |
+| `POST /api/v1/mock-exams/:id/submit` | Submit exam and calculate result |
+| `GET /api/v1/mock-exams/:id/result` | Load result, readiness, incorrect answers, and remediation |
+| `GET /api/v1/mock-exams/history` | Load previous generated exams and results |
+| `POST /api/v1/mock-exams/:id/remediation/:resourceId/complete` | Mark saved remediation item complete |
+
+### Data Dependencies
+
+- Question bank with objective mapping.
+- Difficulty metadata.
+- Curriculum scope metadata.
+- Resource recommendations by objective.
+- Student mastery and weak areas.
+- Entitlement and usage counters.
+- Learning events and points ledger.
+
+### Technology
+
+- Backend: NestJS mock exam module.
+- Database: PostgreSQL mock exam, attempt, answer, result, and remediation tables.
+- Timer state: server timestamps with client countdown.
+- Generation: deterministic rules with randomized selection inside constraints.
+- Analytics: exam generation, completion, readiness trend, remediation completion.
+
 ## 12. Points, Excellence Board, and Challenges Engine
 
 ### Purpose
@@ -1222,6 +1357,9 @@ Required outputs:
 - Weak areas.
 - Weak area evidence summary.
 - Recent mastery improvements and drops.
+- Final exam readiness percentage.
+- Latest mock exam result.
+- Mock exam weak objectives and saved remediation status.
 - Weekly points.
 - Lifetime points.
 - Recommended next action.
@@ -1232,6 +1370,8 @@ MVP student reports:
 
 - Current subject progress.
 - Objective mastery and confidence.
+- Exam readiness trend.
+- Latest mock exam score and saved remediation.
 - Recent achievements.
 - Weak areas.
 - Improved objectives.
@@ -1425,6 +1565,11 @@ Reason:
    - study_plan_runs.
    - study_plan_items.
    - study_plan_item_events.
+   - mock_exams.
+   - mock_exam_attempts.
+   - mock_exam_answers.
+   - mock_exam_results.
+   - mock_exam_remediations.
 
 6. Mastery:
    - student_objective_mastery.
@@ -1574,6 +1719,75 @@ Reason:
 - review_status.
 - teacher_notes.
 
+`mock_exams`:
+
+- id.
+- student_id.
+- subject_id.
+- curriculum_scope_type.
+- curriculum_scope_ids.
+- learning_objective_ids.
+- question_count.
+- timing_mode.
+- time_limit_minutes.
+- difficulty_mode.
+- exam_mode.
+- generated_question_ids.
+- status.
+- created_at.
+- started_at.
+- submitted_at.
+
+`mock_exam_attempts`:
+
+- id.
+- mock_exam_id.
+- student_id.
+- started_at.
+- submitted_at.
+- time_used_seconds.
+- status.
+
+`mock_exam_answers`:
+
+- id.
+- mock_exam_attempt_id.
+- question_id.
+- learning_objective_id.
+- selected_answer_id.
+- is_correct.
+- attempt_order.
+- time_spent_seconds.
+- created_at.
+
+`mock_exam_results`:
+
+- id.
+- mock_exam_attempt_id.
+- score.
+- readiness_percentage.
+- correct_count.
+- incorrect_count.
+- accuracy_by_objective.
+- accuracy_by_scope.
+- accuracy_by_difficulty.
+- strong_objective_ids.
+- weak_objective_ids.
+- mastery_change_summary.
+- confidence_change_summary.
+- recommended_next_action.
+
+`mock_exam_remediations`:
+
+- id.
+- mock_exam_attempt_id.
+- question_id.
+- learning_objective_id.
+- recommended_resource_ids.
+- recommended_practice_set_id.
+- completion_status.
+- completed_at.
+
 ### Database Rules
 
 - Use migrations only; no manual production schema edits.
@@ -1613,6 +1827,7 @@ Recommended:
 | Library | resource lists, filters, lock states |
 | Resource | resource detail, watch progress, answer question |
 | Study Plan | today's plan, item status, recommendation reason |
+| Mock Exams | generate exam, start attempt, submit answers, result review, saved remediation |
 | Mastery | subject mastery, objective mastery, weak areas, recent mastery changes |
 | Learning Evidence | internal event creation from resource, Library, live, teacher task, challenge actions |
 | Points | summary, event history, unlock status |
@@ -1654,6 +1869,19 @@ Teacher review APIs:
 | `POST /api/v1/teacher/students/:studentId/recommend-resource` | Send recommendation |
 | `POST /api/v1/teacher/students/:studentId/assign-practice` | Assign practice |
 
+### Mock Exam API Details
+
+| API | Purpose |
+| --- | --- |
+| `POST /api/v1/mock-exams/generate` | Generate exam from selected options |
+| `GET /api/v1/mock-exams/:id` | Load generated exam |
+| `POST /api/v1/mock-exams/:id/start` | Start timed or untimed attempt |
+| `POST /api/v1/mock-exams/:id/answers` | Submit or autosave an answer |
+| `POST /api/v1/mock-exams/:id/submit` | Submit exam and calculate result |
+| `GET /api/v1/mock-exams/:id/result` | Load result, readiness, incorrect answers, and remediation |
+| `GET /api/v1/mock-exams/history` | Load previous generated exams and results |
+| `POST /api/v1/mock-exams/:id/remediation/:resourceId/complete` | Mark saved remediation complete |
+
 ### API Security
 
 - Every protected route must enforce authentication.
@@ -1677,8 +1905,12 @@ Required:
 - Unit tests for mastery confidence thresholds.
 - Unit tests that one answer cannot create high-confidence mastery.
 - Unit tests that watch progress alone does not complete mastery.
+- Unit tests for mock exam question selection by scope, difficulty, and count.
+- Unit tests for mock exam readiness score calculation.
 - Integration tests for resource question attempts.
 - Integration tests that every answer creates a learning event.
+- Integration tests that mock exam answers create learning events and update mastery.
+- Integration tests that mock exam incorrect answers create saved remediation links.
 - Integration tests that repeated wrong answers update weak areas.
 - Integration tests that teacher-pinned Study Plan items rank first.
 - Integration tests that free caps lock Study Plan items correctly.
@@ -1695,6 +1927,10 @@ Required:
 - Study Plan reason display.
 - Locked Study Plan item upgrade reason.
 - Completion summary after plan completion.
+- Mock exam builder options.
+- Timed mock exam attempt.
+- Mock exam result and readiness display.
+- Saved remediation opens from exam result.
 - Resource playback progress event.
 - Marker question answer flow.
 - Library practice completion updates the next plan.
@@ -1709,6 +1945,7 @@ Required:
 - RBAC permission tests.
 - Content publish workflow.
 - Objective mapping coverage validation.
+- Mock exam blueprint validation.
 - Payment reconciliation audit.
 - Teacher reward cap.
 - Teacher review queue visibility.
@@ -1794,6 +2031,8 @@ Backend:
 - Resource metadata APIs.
 - Media asset model.
 - Content publish states.
+- Question bank metadata for mock exam eligibility.
+- Exam blueprint metadata by grade, subject, scope, and difficulty.
 
 Admin:
 
@@ -1804,6 +2043,7 @@ Admin:
 - Video marker and question editor baseline.
 - Resource/question/objective mapping workflow.
 - Objective coverage validation before publishing.
+- Mock exam eligibility and blueprint configuration.
 
 Mobile:
 
@@ -1827,6 +2067,7 @@ Backend:
 - Learning event creation from watch progress and marker answers.
 - Objective mastery update from resource marker answers.
 - Points event creation for resource actions.
+- Mock exam generation baseline from mapped question bank.
 
 Mobile:
 
@@ -1835,6 +2076,7 @@ Mobile:
 - Question modal/screen.
 - Correct/incorrect feedback.
 - Star progress.
+- Mock exam builder shell.
 
 Admin:
 
@@ -1878,6 +2120,8 @@ Backend:
 - Study plan recommendation rules.
 - Study Plan candidate generation and ranking.
 - Study Plan completion summary and next-plan preview.
+- Mock exam attempts, results, readiness score, and saved remediation.
+- Study Plan updates from mock exam weak objectives.
 - Daily plan API.
 - Progress summaries.
 - Points rollups.
@@ -1888,6 +2132,7 @@ Mobile:
 - Study Plan home connected to backend.
 - Daily achievements connected to points.
 - Progress summary connected to backend.
+- Mock exam result history and readiness card.
 - Profile connected to Student ID/subscription.
 
 Admin:
@@ -2005,6 +2250,11 @@ Recommended small-team approach:
 8. Refund policy and grace period.
 9. Live provider choice.
 10. Whether assistant teacher is human-only or hybrid AI-assisted.
+11. Grade 12 subjects and exam blueprint scope for first launch.
+12. Free mock exam weekly limit and maximum question count.
+13. Whether final exam simulation is paid-only from launch.
+14. Whether mock exam questions include official exam-style questions from launch.
+15. Minimum question-bank coverage per objective before enabling mock exams.
 
 ### Technical Risks
 
@@ -2016,6 +2266,10 @@ Recommended small-team approach:
 | Entitlement scattered across modules | Paid/free inconsistencies | Central entitlement engine |
 | Live video complexity | Delays Phase 3 | Use managed LiveKit/Agora; do not build SFU |
 | Recommendation logic becomes opaque | Hard to support students | Start with explainable rules |
+| Mock exam question bank is too small | Repeated exams feel low value and readiness is unreliable | Set minimum question coverage by objective and difficulty before enabling scopes |
+| Readiness score is trusted too much | Students may overestimate or underestimate exam readiness | Show confidence and scope coverage beside readiness |
+| Timed exam state fails on mobile | Student loses exam attempt | Store server timestamps and autosave answers |
+| Saved remediation becomes disconnected from content updates | Old exam results point to stale resources | Version resources and keep result remediation references auditable |
 | Arabic RTL regressions | Poor user experience | Mandatory RTL QA in every release |
 | Sensitive student data exposure | Compliance and trust issue | RBAC, assignment checks, audit logs |
 
