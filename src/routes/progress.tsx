@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
 import { ProgressRing } from "@/components/brand";
 import { DailyAchievementsCard } from "@/components/daily-achievements-card";
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/progress")({
 function ProgressScreen() {
   const t = useT();
   const { lang } = useLanguage();
+  const [pointsOpen, setPointsOpen] = useState(false);
   const subjects = [
     {
       name: t("subject.math"),
@@ -78,10 +80,22 @@ function ProgressScreen() {
   return (
     <MobileShell>
       <header className="px-5 pt-14 pb-4">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">
-          {t("progress.myProfile")}
-        </p>
-        <h1 className="text-2xl font-bold">{t("progress.title")}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              {t("progress.myProfile")}
+            </p>
+            <h1 className="text-2xl font-bold">{t("progress.title")}</h1>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPointsOpen(true)}
+            className="h-10 w-10 rounded-2xl bg-mint/20 text-navy flex items-center justify-center shadow-soft border border-mint/30 flex-shrink-0"
+            aria-label={lang === "ar" ? "النقاط الأسبوعية" : "Weekly points"}
+          >
+            <Coins className="h-5 w-5" />
+          </button>
+        </div>
       </header>
 
       <div className="px-5 space-y-4">
@@ -188,51 +202,6 @@ function ProgressScreen() {
           </div>
         </div>
 
-        <div className="rounded-3xl bg-card border border-border p-4 shadow-soft">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {lang === "ar" ? "النقاط الأسبوعية" : "Weekly points"}
-              </p>
-              <h2 className="text-xl font-bold mt-0.5">
-                {currentWeeklyPoints} / {leaderboardUnlockPoints}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {lang === "ar"
-                  ? `${pointsRemaining} نقطة لتفعيل لوحة ترتيب الصف`
-                  : `${pointsRemaining} points to activate the class leaderboard`}
-              </p>
-            </div>
-            <div className="h-12 w-12 rounded-2xl bg-mint/20 text-navy flex items-center justify-center">
-              <Coins className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-mint-gradient rounded-full"
-              style={{ width: `${leaderboardProgress}%` }}
-            />
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {weeklyPointSources.slice(0, 4).map((source) => (
-              <div key={source.label.en} className="rounded-2xl bg-muted/60 p-3">
-                <p className="text-[11px] text-muted-foreground leading-tight">
-                  {source.label[lang]}
-                </p>
-                <p className="mt-1 text-sm font-bold text-navy">{source.points}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 flex items-start gap-2 rounded-2xl bg-navy/5 p-3">
-            <LockKeyhole className="h-4 w-4 text-navy mt-0.5 shrink-0" />
-            <p className="text-xs text-muted-foreground leading-snug">
-              {lang === "ar"
-                ? "نقاط الترتيب تُصفّر أسبوعياً، أما نقاط العمر والإنجازات فتبقى في الملف الشخصي."
-                : "Leaderboard points reset weekly, while lifetime points and achievements stay in the profile."}
-            </p>
-          </div>
-        </div>
-
         <div>
           <h3 className="font-semibold px-1 mb-3">{t("common.subjects")}</h3>
           <div className="space-y-3">
@@ -317,7 +286,88 @@ function ProgressScreen() {
           </div>
         </div>
       </div>
+
+      <WeeklyPointsDialog open={pointsOpen} onClose={() => setPointsOpen(false)} lang={lang} />
     </MobileShell>
+  );
+}
+
+function WeeklyPointsDialog({
+  open,
+  onClose,
+  lang,
+}: {
+  open: boolean;
+  onClose: () => void;
+  lang: "ar" | "en";
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-6 pt-20">
+      <button
+        type="button"
+        className="absolute inset-0 bg-navy/35 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-label={lang === "ar" ? "إغلاق" : "Close"}
+      />
+      <div className="relative w-full max-w-[408px] rounded-3xl bg-card border border-border p-4 shadow-glow overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-1 bg-mint-gradient" />
+        <div className="flex items-start justify-between gap-3 pt-1">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              {lang === "ar" ? "النقاط الأسبوعية" : "Weekly points"}
+            </p>
+            <h2 className="text-xl font-bold mt-0.5">
+              {currentWeeklyPoints} / {leaderboardUnlockPoints}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {lang === "ar"
+                ? `${pointsRemaining} نقطة لتفعيل لوحة ترتيب الصف`
+                : `${pointsRemaining} points to activate the class leaderboard`}
+            </p>
+          </div>
+          <div className="h-10 w-10 rounded-2xl bg-mint/20 text-navy flex items-center justify-center shrink-0">
+            <Coins className="h-5 w-5" />
+          </div>
+        </div>
+
+        <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full bg-mint-gradient rounded-full"
+            style={{ width: `${leaderboardProgress}%` }}
+          />
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {weeklyPointSources.slice(0, 4).map((source) => (
+            <div key={source.label.en} className="rounded-2xl bg-muted/60 p-3">
+              <p className="text-[11px] text-muted-foreground leading-tight">
+                {source.label[lang]}
+              </p>
+              <p className="mt-1 text-sm font-bold text-navy">{source.points}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 flex items-start gap-2 rounded-2xl bg-navy/5 p-3">
+          <LockKeyhole className="h-4 w-4 text-navy mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground leading-snug">
+            {lang === "ar"
+              ? "نقاط الترتيب تُصفّر أسبوعياً، أما نقاط العمر والإنجازات فتبقى في الملف الشخصي."
+              : "Leaderboard points reset weekly, while lifetime points and achievements stay in the profile."}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-3 w-full rounded-full bg-hero text-primary-foreground py-2.5 text-sm font-semibold shadow-glow"
+        >
+          {lang === "ar" ? "تم" : "Done"}
+        </button>
+      </div>
+    </div>
   );
 }
 
