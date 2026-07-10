@@ -12,8 +12,6 @@ import {
 } from "lucide-react";
 import teacherMath from "@/assets/teacher_math.jpg.asset.json";
 import teacherScience from "@/assets/teacher_science.jpg.asset.json";
-import teacherEnglish from "@/assets/teacher_english.jpg.asset.json";
-import teacherArabic from "@/assets/teacher_arabic.jpg.asset.json";
 
 export type SubjectId = "math" | "science" | "english" | "arabic";
 
@@ -98,7 +96,7 @@ export const SUBJECTS: SubjectData[] = [
     goalKey: "sub.english.goal",
     minKey: "sub.english.min",
     taskCountKey: "sub.english.taskCount",
-    teacherPhoto: teacherEnglish.url,
+    teacherPhoto: "/assets/teacher_english.jpg",
     teacherNameKey: "teacher.english.name",
     teacherInitial: "L",
     teacherMsgKey: "teacher.english.msg",
@@ -121,7 +119,7 @@ export const SUBJECTS: SubjectData[] = [
     goalKey: "sub.arabic.goal",
     minKey: "sub.arabic.min",
     taskCountKey: "sub.arabic.taskCount",
-    teacherPhoto: teacherArabic.url,
+    teacherPhoto: "/assets/teacher_arabic.jpg",
     teacherNameKey: "teacher.arabic.name",
     teacherInitial: "K",
     teacherMsgKey: "teacher.arabic.msg",
