@@ -46,7 +46,7 @@ const dict: Record<string, { ar: string; en: string }> = {
   // Nav
   "nav.studyPlan": { ar: "الخطة الدراسية", en: "Study Plan" },
   "nav.progress": { ar: "التقدم", en: "Progress" },
-  "nav.library": { ar: "المكتبة", en: "Library" },
+  "nav.library": { ar: "راجع واختبر", en: "Review & Test" },
   "nav.live": { ar: "مباشر", en: "Live" },
   "nav.challenges": { ar: "التحديات", en: "Challenges" },
   "nav.assistant": { ar: "المعلم المساعد", en: "Assistant teacher" },
