@@ -24,7 +24,7 @@ import { resourcePointRules } from "@/lib/points";
 export const Route = createFileRoute("/library")({
   head: () => ({
     meta: [
-      { title: "Library — Mutken" },
+      { title: "Review & Test — Mutken" },
       { name: "description", content: "Browse learning resources by grade and subject." },
     ],
   }),
@@ -209,7 +209,9 @@ function LibraryScreen() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">{t("library.title")}</h1>
-            <p className="text-sm text-muted-foreground">{t("library.subtitle")}</p>
+            <p className="text-sm text-muted-foreground whitespace-pre-line">
+              {t("library.subtitle")}
+            </p>
           </div>
           <button
             type="button"
@@ -220,67 +222,83 @@ function LibraryScreen() {
             <Coins className="h-5 w-5" />
           </button>
         </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              Grade
-            </span>
-            <select
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              className="mt-1 w-full rounded-2xl bg-card border border-border px-3 py-2.5 text-sm shadow-soft outline-none"
-            >
-              {GRADES.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              Subject
-            </span>
-            <select
-              value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
-              className="mt-1 w-full rounded-2xl bg-card border border-border px-3 py-2.5 text-sm shadow-soft outline-none"
-            >
-              <option value="all">All subjects</option>
-              {SUBJECTS.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
       </header>
 
       <div className="px-5 space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          {visibleSubjects.map((s) => {
-            const c = countLessons(s);
-            return (
-              <button
-                key={s.id}
-                onClick={() => setSelected(s)}
-                className="text-left rounded-2xl bg-card border border-border p-4 shadow-soft"
+        <section className="rounded-3xl bg-card border border-border p-4 shadow-soft">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {lang === "ar" ? "راجع" : "Review"}
+              </p>
+              <h2 className="text-base font-extrabold text-navy">
+                {lang === "ar" ? "تصفّح المواد والدروس" : "Browse subjects and lessons"}
+              </h2>
+            </div>
+            <BookOpen className="h-5 w-5 text-navy" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Grade
+              </span>
+              <select
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                className="mt-1 w-full rounded-2xl bg-muted/60 border border-border px-3 py-2 text-xs font-semibold outline-none"
               >
-                <div
-                  className={`h-11 w-11 rounded-2xl bg-gradient-to-br ${s.tint} text-primary-foreground flex items-center justify-center mb-3`}
+                {GRADES.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Subject
+              </span>
+              <select
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+                className="mt-1 w-full rounded-2xl bg-muted/60 border border-border px-3 py-2 text-xs font-semibold outline-none"
+              >
+                <option value="all">All subjects</option>
+                {SUBJECTS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-3 -mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1">
+            {visibleSubjects.map((s) => {
+              const c = countLessons(s);
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setSelected(s)}
+                  className="w-[112px] shrink-0 snap-start text-start rounded-2xl bg-muted/40 border border-border p-2 min-h-[76px]"
                 >
-                  <s.icon className="h-5 w-5" />
-                </div>
-                <p className="font-semibold text-sm">{s.name}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  {c.semesters} semesters · {c.units} units · {c.lessons} lessons
-                </p>
-              </button>
-            );
-          })}
-        </div>
+                  <div className="flex flex-col gap-1.5">
+                    <div
+                      className={`h-8 w-8 rounded-xl bg-gradient-to-br ${s.tint} text-primary-foreground flex items-center justify-center flex-shrink-0`}
+                    >
+                      <s.icon className="h-3.5 w-3.5" />
+                    </div>
+                    <p className="font-bold text-xs leading-tight line-clamp-2">{s.name}</p>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground mt-1 leading-tight">
+                    {c.units} units · {c.lessons} lessons
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
         <div className="border-t border-border pt-4">
           <MockExamBuilderCard lang={lang} />
@@ -488,6 +506,25 @@ function ResourcePointsDialog({
   );
 }
 
+const selfExamAttempts = [
+  {
+    title: { ar: "اختبار الكسور", en: "Fractions self test" },
+    date: { ar: "آخر محاولة: اليوم", en: "Last attempt: today" },
+    score: { ar: "١٨ / ٢٥ صحيح", en: "18 / 25 correct" },
+    readiness: "72%",
+    weak: { ar: "مسائل الكسور", en: "Fraction word problems" },
+    videoId: "word-problems",
+  },
+  {
+    title: { ar: "مراجعة الأعداد", en: "Numbers review" },
+    date: { ar: "آخر محاولة: أمس", en: "Last attempt: yesterday" },
+    score: { ar: "٢١ / ٢٥ صحيح", en: "21 / 25 correct" },
+    readiness: "84%",
+    weak: { ar: "التقريب والتقدير", en: "Rounding and estimation" },
+    videoId: "intro-fractions",
+  },
+];
+
 function MockExamBuilderCard({ lang }: { lang: "ar" | "en" }) {
   return (
     <div className="rounded-3xl bg-card border border-border p-4 shadow-soft overflow-hidden relative">
@@ -498,12 +535,12 @@ function MockExamBuilderCard({ lang }: { lang: "ar" | "en" }) {
             {lang === "ar" ? "اختبار ذاتي" : "Self test"}
           </p>
           <h2 className="mt-0.5 text-lg font-extrabold text-navy">
-            {lang === "ar" ? "اختبر جاهزيتك للامتحان النهائي" : "Check your final-exam readiness"}
+            {lang === "ar" ? "قِس جاهزيتك للامتحان المدرسي" : "Measure school-exam readiness"}
           </h2>
           <p className="mt-1 text-xs leading-snug text-muted-foreground">
             {lang === "ar"
-              ? "أنشئ اختبارًا حسب الدروس والصعوبة والوقت، ثم استخدم النتيجة لتحديث الإتقان وخطة التعلم."
-              : "Create a test by lessons, difficulty, and timing, then use the result to update mastery and the study plan."}
+              ? "راجع محاولاتك السابقة، افتح المحتوى العلاجي، أو أنشئ اختبارًا جديدًا."
+              : "Review previous attempts, open remediation, or create a new exam."}
           </p>
         </div>
         <div className="h-12 w-12 rounded-2xl bg-warn/20 text-navy flex items-center justify-center flex-shrink-0">
@@ -511,11 +548,50 @@ function MockExamBuilderCard({ lang }: { lang: "ar" | "en" }) {
         </div>
       </div>
 
+      <div className="mt-4 space-y-2">
+        {selfExamAttempts.map((attempt) => (
+          <div key={attempt.title.en} className="rounded-2xl bg-muted/50 border border-border p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-extrabold text-navy">{attempt.title[lang]}</p>
+                <p className="text-[11px] text-muted-foreground">{attempt.date[lang]}</p>
+              </div>
+              <div className="text-end flex-shrink-0">
+                <p className="text-lg font-extrabold text-navy leading-none">{attempt.readiness}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {lang === "ar" ? "جاهزية" : "ready"}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+              <div className="rounded-xl bg-card px-2.5 py-2">
+                <p className="text-muted-foreground">{lang === "ar" ? "النتيجة" : "Score"}</p>
+                <p className="font-bold text-navy">{attempt.score[lang]}</p>
+              </div>
+              <div className="rounded-xl bg-card px-2.5 py-2">
+                <p className="text-muted-foreground">{lang === "ar" ? "يحتاج مراجعة" : "Review"}</p>
+                <p className="font-bold text-navy truncate">{attempt.weak[lang]}</p>
+              </div>
+            </div>
+
+            <Link
+              to="/video/$id"
+              params={{ id: attempt.videoId }}
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full bg-card border border-border px-3 py-2 text-xs font-bold text-navy"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              {lang === "ar" ? "عرض المحتوى العلاجي المقترح" : "View recommended remediation"}
+            </Link>
+          </div>
+        ))}
+      </div>
+
       <Link
         to="/mock-exam"
         className="mt-3 block w-full rounded-full bg-hero text-primary-foreground py-2.5 text-center text-sm font-semibold shadow-glow"
       >
-        {lang === "ar" ? "إنشاء اختبار ذاتي" : "Create self test"}
+        {lang === "ar" ? "إنشاء اختبار ذاتي جديد" : "Create new self test"}
       </Link>
     </div>
   );
