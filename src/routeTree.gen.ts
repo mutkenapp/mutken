@@ -13,6 +13,7 @@ import { Route as SubjectRouteImport } from './routes/subject'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ParentRouteImport } from './routes/parent'
 import { Route as MockExamRouteImport } from './routes/mock-exam'
 import { Route as MeetingRouteImport } from './routes/meeting'
 import { Route as LiveRouteImport } from './routes/live'
@@ -21,6 +22,10 @@ import { Route as ChatRouteImport } from './routes/chat'
 import { Route as ChallengesRouteImport } from './routes/challenges'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VideoIdRouteImport } from './routes/video.$id'
+import { Route as ParentScheduleRouteImport } from './routes/parent.schedule'
+import { Route as ParentProgressRouteImport } from './routes/parent.progress'
+import { Route as ParentMessagesRouteImport } from './routes/parent.messages'
+import { Route as ParentAccountRouteImport } from './routes/parent.account'
 import { Route as MockExamTakeRouteImport } from './routes/mock-exam.take'
 
 const SubjectRoute = SubjectRouteImport.update({
@@ -41,6 +46,11 @@ const ProgressRoute = ProgressRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentRoute = ParentRouteImport.update({
+  id: '/parent',
+  path: '/parent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MockExamRoute = MockExamRouteImport.update({
@@ -83,6 +93,26 @@ const VideoIdRoute = VideoIdRouteImport.update({
   path: '/video/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ParentScheduleRoute = ParentScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => ParentRoute,
+} as any)
+const ParentProgressRoute = ParentProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => ParentRoute,
+} as any)
+const ParentMessagesRoute = ParentMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => ParentRoute,
+} as any)
+const ParentAccountRoute = ParentAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => ParentRoute,
+} as any)
 const MockExamTakeRoute = MockExamTakeRouteImport.update({
   id: '/take',
   path: '/take',
@@ -97,11 +127,16 @@ export interface FileRoutesByFullPath {
   '/live': typeof LiveRoute
   '/meeting': typeof MeetingRoute
   '/mock-exam': typeof MockExamRouteWithChildren
+  '/parent': typeof ParentRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/subject': typeof SubjectRoute
   '/mock-exam/take': typeof MockExamTakeRoute
+  '/parent/account': typeof ParentAccountRoute
+  '/parent/messages': typeof ParentMessagesRoute
+  '/parent/progress': typeof ParentProgressRoute
+  '/parent/schedule': typeof ParentScheduleRoute
   '/video/$id': typeof VideoIdRoute
 }
 export interface FileRoutesByTo {
@@ -112,11 +147,16 @@ export interface FileRoutesByTo {
   '/live': typeof LiveRoute
   '/meeting': typeof MeetingRoute
   '/mock-exam': typeof MockExamRouteWithChildren
+  '/parent': typeof ParentRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/subject': typeof SubjectRoute
   '/mock-exam/take': typeof MockExamTakeRoute
+  '/parent/account': typeof ParentAccountRoute
+  '/parent/messages': typeof ParentMessagesRoute
+  '/parent/progress': typeof ParentProgressRoute
+  '/parent/schedule': typeof ParentScheduleRoute
   '/video/$id': typeof VideoIdRoute
 }
 export interface FileRoutesById {
@@ -128,11 +168,16 @@ export interface FileRoutesById {
   '/live': typeof LiveRoute
   '/meeting': typeof MeetingRoute
   '/mock-exam': typeof MockExamRouteWithChildren
+  '/parent': typeof ParentRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/subject': typeof SubjectRoute
   '/mock-exam/take': typeof MockExamTakeRoute
+  '/parent/account': typeof ParentAccountRoute
+  '/parent/messages': typeof ParentMessagesRoute
+  '/parent/progress': typeof ParentProgressRoute
+  '/parent/schedule': typeof ParentScheduleRoute
   '/video/$id': typeof VideoIdRoute
 }
 export interface FileRouteTypes {
@@ -145,11 +190,16 @@ export interface FileRouteTypes {
     | '/live'
     | '/meeting'
     | '/mock-exam'
+    | '/parent'
     | '/profile'
     | '/progress'
     | '/sitemap.xml'
     | '/subject'
     | '/mock-exam/take'
+    | '/parent/account'
+    | '/parent/messages'
+    | '/parent/progress'
+    | '/parent/schedule'
     | '/video/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -160,11 +210,16 @@ export interface FileRouteTypes {
     | '/live'
     | '/meeting'
     | '/mock-exam'
+    | '/parent'
     | '/profile'
     | '/progress'
     | '/sitemap.xml'
     | '/subject'
     | '/mock-exam/take'
+    | '/parent/account'
+    | '/parent/messages'
+    | '/parent/progress'
+    | '/parent/schedule'
     | '/video/$id'
   id:
     | '__root__'
@@ -175,11 +230,16 @@ export interface FileRouteTypes {
     | '/live'
     | '/meeting'
     | '/mock-exam'
+    | '/parent'
     | '/profile'
     | '/progress'
     | '/sitemap.xml'
     | '/subject'
     | '/mock-exam/take'
+    | '/parent/account'
+    | '/parent/messages'
+    | '/parent/progress'
+    | '/parent/schedule'
     | '/video/$id'
   fileRoutesById: FileRoutesById
 }
@@ -191,6 +251,7 @@ export interface RootRouteChildren {
   LiveRoute: typeof LiveRoute
   MeetingRoute: typeof MeetingRoute
   MockExamRoute: typeof MockExamRouteWithChildren
+  ParentRoute: typeof ParentRouteWithChildren
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -226,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent': {
+      id: '/parent'
+      path: '/parent'
+      fullPath: '/parent'
+      preLoaderRoute: typeof ParentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mock-exam': {
@@ -284,6 +352,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VideoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/parent/schedule': {
+      id: '/parent/schedule'
+      path: '/schedule'
+      fullPath: '/parent/schedule'
+      preLoaderRoute: typeof ParentScheduleRouteImport
+      parentRoute: typeof ParentRoute
+    }
+    '/parent/progress': {
+      id: '/parent/progress'
+      path: '/progress'
+      fullPath: '/parent/progress'
+      preLoaderRoute: typeof ParentProgressRouteImport
+      parentRoute: typeof ParentRoute
+    }
+    '/parent/messages': {
+      id: '/parent/messages'
+      path: '/messages'
+      fullPath: '/parent/messages'
+      preLoaderRoute: typeof ParentMessagesRouteImport
+      parentRoute: typeof ParentRoute
+    }
+    '/parent/account': {
+      id: '/parent/account'
+      path: '/account'
+      fullPath: '/parent/account'
+      preLoaderRoute: typeof ParentAccountRouteImport
+      parentRoute: typeof ParentRoute
+    }
     '/mock-exam/take': {
       id: '/mock-exam/take'
       path: '/take'
@@ -306,6 +402,23 @@ const MockExamRouteWithChildren = MockExamRoute._addFileChildren(
   MockExamRouteChildren,
 )
 
+interface ParentRouteChildren {
+  ParentAccountRoute: typeof ParentAccountRoute
+  ParentMessagesRoute: typeof ParentMessagesRoute
+  ParentProgressRoute: typeof ParentProgressRoute
+  ParentScheduleRoute: typeof ParentScheduleRoute
+}
+
+const ParentRouteChildren: ParentRouteChildren = {
+  ParentAccountRoute: ParentAccountRoute,
+  ParentMessagesRoute: ParentMessagesRoute,
+  ParentProgressRoute: ParentProgressRoute,
+  ParentScheduleRoute: ParentScheduleRoute,
+}
+
+const ParentRouteWithChildren =
+  ParentRoute._addFileChildren(ParentRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChallengesRoute: ChallengesRoute,
@@ -314,6 +427,7 @@ const rootRouteChildren: RootRouteChildren = {
   LiveRoute: LiveRoute,
   MeetingRoute: MeetingRoute,
   MockExamRoute: MockExamRouteWithChildren,
+  ParentRoute: ParentRouteWithChildren,
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
