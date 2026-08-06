@@ -1,8 +1,8 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   ArrowUpRight,
   BookOpenCheck,
-  CalendarClock,
   ChartNoAxesCombined,
   CheckCircle2,
   ChevronRight,
@@ -40,6 +40,7 @@ function ParentRoute() {
 function ParentHomeScreen() {
   const { lang, dir } = useLanguage();
   const arrowClass = dir === "rtl" ? "rotate-180" : "";
+  const [actionCompleted, setActionCompleted] = useState(false);
 
   const metrics = [
     {
@@ -158,6 +159,184 @@ function ParentHomeScreen() {
           ))}
         </div>
 
+        <section>
+          <ParentSectionHeader
+            title={lang === "ar" ? "مركز متابعة ولي الأمر" : "Parent action center"}
+            description={
+              lang === "ar"
+                ? "ملخص واحد يوضح ما حدث، وما فعله متقن، وما المطلوب منك"
+                : "One clear view of what happened, what Mutken did, and what you can do"
+            }
+            action={
+              <span
+                className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${
+                  actionCompleted ? "bg-success/10 text-success" : "bg-warn/15 text-amber-700"
+                }`}
+              >
+                {actionCompleted
+                  ? lang === "ar"
+                    ? "تمت المتابعة"
+                    : "Action completed"
+                  : lang === "ar"
+                    ? "قبل لقاء الغد"
+                    : "Before tomorrow's session"}
+              </span>
+            }
+          />
+
+          <ParentCard
+            className={`overflow-hidden transition-colors ${
+              actionCompleted ? "border-success/30" : "border-warn/30"
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/20 px-4 py-3.5 sm:px-5">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+                    actionCompleted ? "bg-success/10 text-success" : "bg-warn/15 text-amber-700"
+                  }`}
+                >
+                  {actionCompleted ? (
+                    <CheckCircle2 className="h-5 w-5" />
+                  ) : (
+                    <CircleAlert className="h-5 w-5" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-extrabold text-navy">
+                    {actionCompleted
+                      ? lang === "ar"
+                        ? "تم إكمال خطوة المتابعة"
+                        : "Follow-up step completed"
+                      : lang === "ar"
+                        ? "مراجعة الرياضيات تحتاج متابعة بسيطة"
+                        : "A math review needs a little follow-up"}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    {lang === "ar"
+                      ? "أولوية متوسطة · لا يوجد خطر عاجل"
+                      : "Medium priority · No urgent risk"}
+                  </p>
+                </div>
+              </div>
+              <div className="min-w-32 sm:min-w-44">
+                <div className="flex items-center justify-between text-[9px] font-bold text-muted-foreground">
+                  <span>{lang === "ar" ? "تقدم الإجراء" : "Action progress"}</span>
+                  <span>{actionCompleted ? "3/3" : "2/3"}</span>
+                </div>
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      actionCompleted ? "w-full bg-success" : "w-2/3 bg-mint-gradient"
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-3">
+              <ActionCenterStep
+                icon={CircleAlert}
+                label={lang === "ar" ? "ما الذي حدث؟" : "What happened"}
+                title={
+                  lang === "ar"
+                    ? "ضرب الكسور يحتاج متابعة"
+                    : "Multiplying fractions needs attention"
+                }
+                body={
+                  lang === "ar"
+                    ? "انخفضت الدقة إلى ٥٢٪ بعد محاولتين متتاليتين واجه فيهما عمر صعوبة."
+                    : "Accuracy fell to 52% after two consecutive attempts where Omar struggled."
+                }
+                tone="bg-warn/15 text-amber-700"
+              />
+              <ActionCenterStep
+                icon={Sparkles}
+                label={lang === "ar" ? "ماذا فعل متقن؟" : "What Mutken did"}
+                title={
+                  lang === "ar"
+                    ? "أضيفت مراجعة وتدخل من المعلم"
+                    : "A review and teacher follow-up were assigned"
+                }
+                body={
+                  lang === "ar"
+                    ? "أضيفت مراجعة لمدة ١٠ دقائق وربطت بلقاء الغد الساعة ٦:٣٠ مساءً."
+                    : "A 10-minute review was added and connected to tomorrow's 6:30 PM session."
+                }
+                tone="bg-blue/10 text-blue"
+              />
+              <ActionCenterStep
+                icon={CheckCircle2}
+                label={lang === "ar" ? "ما المطلوب منك؟" : "Your next step"}
+                title={
+                  actionCompleted
+                    ? lang === "ar"
+                      ? "تم تسجيل التشجيع"
+                      : "Encouragement recorded"
+                    : lang === "ar"
+                      ? "شجّع عمر قبل اللقاء"
+                      : "Encourage Omar before the session"
+                }
+                body={
+                  actionCompleted
+                    ? lang === "ar"
+                      ? "تم وضع علامة مكتمل، وسيظهر لك أثر المراجعة بعد اللقاء القادم."
+                      : "Marked complete. You will see the review outcome after the next session."
+                    : lang === "ar"
+                      ? "اطلب منه إكمال المراجعة القصيرة قبل لقاء الأربعاء الساعة ٦:٣٠ مساءً."
+                      : "Ask him to finish the short review before Wednesday's 6:30 PM session."
+                }
+                tone={actionCompleted ? "bg-success/10 text-success" : "bg-mint/20 text-navy"}
+                last
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-border bg-muted/20 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <p className="text-[10px] leading-relaxed text-muted-foreground">
+                {actionCompleted
+                  ? lang === "ar"
+                    ? "سنحدّث النتيجة تلقائياً بعد لقاء الغد."
+                    : "The outcome will update automatically after tomorrow's session."
+                  : lang === "ar"
+                    ? "الوقت المتوقع منك: أقل من دقيقة."
+                    : "Expected time from you: less than one minute."}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to="/parent/progress"
+                  search={{ subject: "math" }}
+                  className="inline-flex items-center justify-center rounded-full border border-border bg-card px-3.5 py-2 text-[10px] font-bold text-navy"
+                >
+                  {lang === "ar" ? "متابعة الخطة" : "View action plan"}
+                </Link>
+                <Link
+                  to="/parent/messages"
+                  className="inline-flex items-center justify-center rounded-full border border-border bg-card px-3.5 py-2 text-[10px] font-bold text-blue"
+                >
+                  {lang === "ar" ? "رسالة المعلم" : "Teacher message"}
+                </Link>
+                <button
+                  type="button"
+                  aria-pressed={actionCompleted}
+                  onClick={() => setActionCompleted((current) => !current)}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-[10px] font-bold transition-colors ${
+                    actionCompleted ? "bg-success/10 text-success" : "bg-navy text-white"
+                  }`}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {actionCompleted
+                    ? lang === "ar"
+                      ? "إعادة فتح"
+                      : "Reopen"
+                    : lang === "ar"
+                      ? "تم التنفيذ"
+                      : "Mark done"}
+                </button>
+              </div>
+            </div>
+          </ParentCard>
+        </section>
+
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.8fr)]">
           <div className="space-y-6">
             <section>
@@ -269,65 +448,6 @@ function ParentHomeScreen() {
           <div className="space-y-6">
             <section>
               <ParentSectionHeader
-                title={lang === "ar" ? "يحتاج انتباهك" : "Needs your attention"}
-              />
-              <ParentCard className="overflow-hidden">
-                <div className="border-b border-border p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-warn/15 text-amber-600">
-                      <CircleAlert className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-bold text-navy">
-                          {lang === "ar" ? "مراجعة قصيرة مطلوبة" : "Short review needed"}
-                        </p>
-                        <span className="rounded-full bg-warn/15 px-2 py-1 text-[9px] font-bold text-amber-700">
-                          {lang === "ar" ? "متوسط" : "Medium"}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {lang === "ar"
-                          ? "واجه عمر صعوبة في ضرب الكسور في محاولتين متتاليتين."
-                          : "Omar struggled with multiplying fractions in two consecutive attempts."}
-                      </p>
-                      <p className="mt-2 text-[11px] font-bold text-blue">
-                        {lang === "ar"
-                          ? "إجراء مقترح: شجعه على مراجعة ١٠ دقائق"
-                          : "Suggested: Encourage a 10-minute review"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue/10 text-blue">
-                      <CalendarClock className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-navy">
-                        {lang === "ar" ? "لقاء رياضيات غداً" : "Math session tomorrow"}
-                      </p>
-                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {lang === "ar"
-                          ? "الأربعاء، ٦:٣٠ مساءً مع أ. أحمد"
-                          : "Wednesday, 6:30 PM with Mr. Ahmed"}
-                      </p>
-                      <Link
-                        to="/parent/schedule"
-                        className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-blue"
-                      >
-                        {lang === "ar" ? "عرض الموعد" : "View session"}
-                        <ChevronRight className={`h-3 w-3 ${arrowClass}`} />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </ParentCard>
-            </section>
-
-            <section>
-              <ParentSectionHeader
                 title={lang === "ar" ? "آخر تحديث من المعلم" : "Latest teacher update"}
               />
               <ParentCard className="relative overflow-hidden p-4">
@@ -385,5 +505,42 @@ function ParentHomeScreen() {
         </div>
       </div>
     </ParentShell>
+  );
+}
+
+function ActionCenterStep({
+  icon: Icon,
+  label,
+  title,
+  body,
+  tone,
+  last = false,
+}: {
+  icon: typeof CircleAlert;
+  label: string;
+  title: string;
+  body: string;
+  tone: string;
+  last?: boolean;
+}) {
+  return (
+    <div
+      className={`relative p-4 sm:p-5 ${
+        last ? "" : "border-b border-border lg:border-b-0 lg:border-e"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${tone}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-[9px] font-extrabold uppercase tracking-wider text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-1.5 text-sm font-bold leading-snug text-navy">{title}</p>
+          <p className="mt-2 text-[11px] leading-6 text-muted-foreground">{body}</p>
+        </div>
+      </div>
+    </div>
   );
 }
